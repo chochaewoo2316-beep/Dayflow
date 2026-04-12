@@ -142,7 +142,7 @@
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(var(--safe-bottom) + 96px);
+      padding-bottom: calc(var(--safe-bottom) + 10px);
     }
 
     /* ---------- Pull to refresh ---------- */
@@ -263,6 +263,67 @@
       letter-spacing: -0.2px;
       color: var(--text-primary);
       flex: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+    .month-picker {
+      display: none;
+      background: var(--bg-secondary);
+      border: 1px solid var(--separator);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px;
+      flex-shrink: 0;
+    }
+    .month-picker.open { display: block; }
+    .month-picker .picker-year-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .month-picker .picker-year {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 60px;
+      text-align: center;
+    }
+    .month-picker .picker-arrow {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--separator);
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .month-picker .picker-arrow:active { background: var(--separator); }
+    .month-picker .picker-months {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+    .month-picker .picker-month {
+      padding: 6px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+    }
+    .month-picker .picker-month:active { background: var(--bg-tertiary); }
+    .month-picker .picker-month.current {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
     }
     .nav-actions {
       display: flex;
@@ -306,6 +367,19 @@
       background: rgba(245, 165, 36, 0.22);
       color: var(--accent);
     }
+    .add-event-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 4px 24px;
+      white-space: nowrap;
+    }
+    .add-event-label .btn-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
 
     .weekday-header {
       display: grid;
@@ -324,13 +398,45 @@
     .weekday-header .wh.sat { color: var(--text-tertiary); }
 
     /* ---------- Month Grid ---------- */
+    .month-grid-wrapper {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow: hidden;
+    }
     .month-grid {
-      flex: 1;
+      width: 100%;
+      height: 100%;
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       grid-auto-rows: 1fr;
       gap: 0;
       min-height: 0;
+    }
+    .month-grid.slide-out-left {
+      animation: slideOutLeft 250ms ease-out forwards;
+    }
+    .month-grid.slide-out-right {
+      animation: slideOutRight 250ms ease-out forwards;
+    }
+    .month-grid.slide-in-left {
+      animation: slideInLeft 250ms ease-out forwards;
+    }
+    .month-grid.slide-in-right {
+      animation: slideInRight 250ms ease-out forwards;
+    }
+    @keyframes slideOutLeft {
+      to { opacity: 0; transform: translateX(-100%); }
+    }
+    @keyframes slideOutRight {
+      to { opacity: 0; transform: translateX(100%); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-100%); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(100%); }
+      to { opacity: 1; transform: translateX(0); }
     }
     .day-cell {
       display: flex;
@@ -406,6 +512,23 @@
       white-space: nowrap;
       letter-spacing: -0.1px;
       border-left: 2px solid currentColor;
+    }
+    .day-cell .chip.span-start {
+      border-radius: 3px 0 0 3px;
+      margin-right: -3px;
+    }
+    .day-cell .chip.span-mid {
+      border-radius: 0;
+      margin-left: -3px;
+      margin-right: -3px;
+      border-left: none;
+      font-size: 0;
+    }
+    .day-cell .chip.span-end {
+      border-radius: 0 3px 3px 0;
+      margin-left: -3px;
+      border-left: none;
+      font-size: 0;
     }
     .day-cell .chip.done {
       opacity: 0.5;
@@ -565,11 +688,16 @@
       transition: background 0.15s ease;
     }
     .week-day .wd {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 600;
       color: var(--text-secondary);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      text-align: center;
     }
     .week-day .dd {
       width: 28px;
@@ -616,9 +744,9 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: none;
+      min-height: 28px;
     }
-    .weather-bar.show { display: block; }
+    .weather-bar:not(.show) { visibility: hidden; }
     .weather-bar .wb-sep {
       margin: 0 6px;
       opacity: 0.5;
@@ -707,9 +835,10 @@
     .task-item:active { background: var(--bg-tertiary); }
 
     .checkbox {
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
+      position: relative;
+      width: 23px;
+      height: 23px;
+      border-radius: 5px;
       border: 1.5px solid var(--separator-opaque);
       flex-shrink: 0;
       display: flex;
@@ -718,9 +847,25 @@
       background: transparent;
       transition: all 0.15s ease;
     }
+    .checkbox::before {
+      content: '';
+      position: absolute;
+      top: -12px;
+      left: -16px;
+      right: -16px;
+      bottom: -12px;
+      min-width: 44px;
+      min-height: 44px;
+    }
+    .event-bar {
+      width: 3px;
+      height: 20px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
     .checkbox svg {
-      width: 12px;
-      height: 12px;
+      width: 16px;
+      height: 16px;
       stroke: #fff;
       stroke-width: 2.5;
       fill: none;
@@ -1188,8 +1333,9 @@
       <div class="month-nav">
         <div class="month-title" id="monthTitle"></div>
         <div class="nav-actions">
-          <button type="button" class="nav-btn primary" id="addEventBtn" aria-label="일정 추가">
+          <button type="button" class="nav-btn primary add-event-label" id="addEventBtn" aria-label="일정 추가">
             <svg viewBox="0 0 20 20"><rect x="3" y="4.5" width="14" height="13" rx="2"></rect><path d="M3 8h14"></path><path d="M7 3v3"></path><path d="M13 3v3"></path><path d="M10 11v4"></path><path d="M8 13h4"></path></svg>
+            <span class="btn-label">일정추가</span>
           </button>
           <button type="button" class="nav-btn" id="prevMonth" aria-label="이전 달">
             <svg viewBox="0 0 20 20"><path d="M12 5l-5 5 5 5"></path></svg>
@@ -1211,7 +1357,17 @@
         <div class="wh">금</div>
         <div class="wh sat">토</div>
       </div>
-      <div class="month-grid" id="monthGrid"></div>
+      <div class="month-picker" id="monthPicker">
+        <div class="picker-year-row">
+          <button type="button" class="picker-arrow" id="pickerPrevYear">‹</button>
+          <div class="picker-year" id="pickerYear"></div>
+          <button type="button" class="picker-arrow" id="pickerNextYear">›</button>
+        </div>
+        <div class="picker-months" id="pickerMonths"></div>
+      </div>
+      <div class="month-grid-wrapper" id="monthGridWrapper">
+        <div class="month-grid" id="monthGrid"></div>
+      </div>
     </section>
 
     <div class="hairline"></div>
@@ -1251,12 +1407,8 @@
       <span class="chk"></span>
     </button>
     <div class="sep"></div>
-    <button type="button" id="settingsExport">지금 백업 (JSON 다운로드)</button>
-    <button type="button" id="settingsImport">복원 (JSON 가져오기)</button>
-    <div class="sep"></div>
     <button type="button" id="settingsInstall">홈 화면 추가 방법</button>
   </div>
-  <input type="file" id="importFile" accept="application/json,.json" style="display:none" />
 
   <div class="install-banner" id="installBanner" style="display:none">
     <div class="msg"><strong>홈 화면에 추가</strong>하면 앱처럼 사용할 수 있어요.<br>공유 버튼 → "홈 화면에 추가"</div>
@@ -1628,7 +1780,9 @@
     const EVENT_COLORS = [
       'rgb(94, 106, 210)',
       'rgb(230, 92, 92)',
-      'rgb(74, 180, 130)'
+      'rgb(74, 180, 130)',
+      'rgb(59, 165, 232)',
+      'rgb(234, 179, 56)'
     ];
 
     const EVENT_DEFAULTS = {
@@ -1873,7 +2027,29 @@
         const [y] = dateStr.split('-').map(Number);
         if (lunarLeapMonth(y) !== ev.lunarMonth) text += ' (평달)';
       }
+      if (ev.kind === 'anniversary' && ev.recurring && ev.startDate) {
+        const startYear = +ev.startDate.split('-')[0];
+        const viewYear = +dateStr.split('-')[0];
+        const diff = viewYear - startYear;
+        if (diff > 0) text += ` ${diff}주년`;
+      }
       return text;
+    }
+
+    function getHundredDayMilestones(ev, minDs, maxDs) {
+      if (ev.kind !== 'anniversary' || !ev.startDate) return [];
+      const [sy, sm, sd] = ev.startDate.split('-').map(Number);
+      const start = new Date(sy, sm - 1, sd);
+      const results = [];
+      for (let n = 100; n <= 1000; n += 100) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + n);
+        const ds = toDateStr(d);
+        if (ds >= minDs && ds <= maxDs) {
+          results.push({ date: ds, days: n, title: `${ev.title || ''} ${n}일`, color: ev.color, evId: ev.id });
+        }
+      }
+      return results;
     }
 
     /** 주어진 Event가 해당 날짜에 발생하는지 (일반/solar/lunar 모두 지원) */
@@ -2073,13 +2249,12 @@
       el.textContent = dt.toLocaleDateString('ko-KR', {
         month: 'long', day: 'numeric', weekday: 'long'
       });
-      document.getElementById('todayLabel').textContent =
-        state.selectedDate === todayStr() ? 'TODAY' : 'SELECTED';
+      document.getElementById('todayLabel').textContent = getRelativeLabel(state.selectedDate);
     }
 
     function renderProgressRing() {
       const container = document.getElementById('progressRing');
-      const list = tasksForDate(state.selectedDate);
+      const list = tasksForDate(state.selectedDate).filter((t) => t.source !== 'event');
       const done = list.filter((t) => isTaskCompletedOn(t, state.selectedDate)).length;
       const pct = list.length === 0 ? 0 : Math.round((done / list.length) * 100);
       const r = 26;
@@ -2095,6 +2270,19 @@
       `;
     }
 
+    function getRelativeLabel(ds) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const [y,m,d] = ds.split('-').map(Number);
+      const target = new Date(y, m-1, d);
+      const diff = Math.round((target - today) / 86400000);
+      if (diff === 0) return 'TODAY';
+      if (diff === 1) return 'TMRW';
+      if (diff === -1) return 'YEST';
+      if (diff > 0) return `+${diff}D`;
+      return `${diff}D`;
+    }
+
     function renderWeekStrip() {
       const el = document.getElementById('weekStrip');
       const dates = getWeekDates(state.selectedDate);
@@ -2102,17 +2290,28 @@
       el.innerHTML = dates.map((dt) => {
         const ds = toDateStr(dt);
         const dayEvents = eventsOnDate(ds);
+        // 100일 단위 기념일 가상 이벤트 추가
+        const milestoneLabels = [];
+        for (const ev of state.events) {
+          for (const ms of getHundredDayMilestones(ev, ds, ds)) {
+            milestoneLabels.push({ label: ms.title });
+          }
+        }
         const classes = ['week-day'];
         if (ds === state.selectedDate) classes.push('selected');
         if (ds === today) classes.push('today');
-        if (dayEvents.length > 0) classes.push('has-events');
+        if (dayEvents.length > 0 || milestoneLabels.length > 0) classes.push('has-events');
 
-        // 일정 라벨 최대 3개 표시
-        const evtHtml = dayEvents.slice(0, 3).map((ev) => {
+        const allLabels = dayEvents.slice(0, 3).map((ev) => {
           const label = chipDisplayText(ev, ds);
           const shortLabel = label.length > 5 ? label.slice(0, 5) + '…' : label;
           return `<div class="evt-label" title="${escapeHtml(label)}">${escapeHtml(shortLabel)}</div>`;
-        }).join('');
+        });
+        for (const ms of milestoneLabels.slice(0, 3 - allLabels.length)) {
+          const short = ms.label.length > 5 ? ms.label.slice(0, 5) + '…' : ms.label;
+          allLabels.push(`<div class="evt-label" title="${escapeHtml(ms.label)}">${escapeHtml(short)}</div>`);
+        }
+        const evtHtml = allLabels.join('');
 
         return `
           <div class="${classes.join(' ')}" data-date="${ds}">
@@ -2134,14 +2333,32 @@
       `).join('');
     }
 
+    function getMilestonesForDate(dateStr) {
+      const items = [];
+      for (const ev of state.events) {
+        for (const ms of getHundredDayMilestones(ev, dateStr, dateStr)) {
+          items.push({
+            id: `ms-${ev.id}-${ms.days}`,
+            title: ms.title,
+            category: 'schedule',
+            color: ms.color,
+            _milestone: true
+          });
+        }
+      }
+      return items;
+    }
+
     function renderTaskList() {
       const el = document.getElementById('taskList');
       let list = tasksForDate(state.selectedDate);
+      const milestones = getMilestonesForDate(state.selectedDate);
       if (state.filter !== 'all') {
         list = list.filter((t) => t.category === state.filter);
+        if (state.filter !== 'schedule') milestones.length = 0;
       }
 
-      if (list.length === 0) {
+      if (list.length === 0 && milestones.length === 0) {
         el.innerHTML = `
           <div class="empty">
             <div class="emoji">☀️</div>
@@ -2153,7 +2370,20 @@
 
       const ROUTINE_LABELS = { daily: 'DAILY', weekdays: 'WEEKDAYS', weekends: 'WEEKENDS' };
 
-      el.innerHTML = list.map((t) => {
+      const milestoneHtml = milestones.map((ms) => `
+        <div class="task-item" data-id="${ms.id}">
+          <div class="event-bar" style="background:${ms.color || 'var(--accent)'}"></div>
+          <div class="task-body">
+            <div class="task-title">
+              <span class="cat-dot schedule"></span>
+              <span>${escapeHtml(ms.title)}</span>
+            </div>
+            <div class="task-meta"><span class="badge">🎉 D-DAY</span></div>
+          </div>
+        </div>
+      `).join('');
+
+      el.innerHTML = milestoneHtml + list.map((t) => {
         const done = isTaskCompletedOn(t, state.selectedDate);
         const routineBadge = t.type !== 'once'
           ? `<span class="badge">${ROUTINE_LABELS[t.type]}</span>`
@@ -2165,11 +2395,15 @@
           ? `<div class="task-meta">${routineBadge}${eventBadge}</div>`
           : '';
         const actions = `<button class="icon-btn danger" data-action="delete" aria-label="삭제">✕</button>`;
+        const isEvent = t.source === 'event';
+        const leftEl = isEvent
+          ? `<div class="checkbox" style="visibility:hidden"></div>`
+          : `<div class="checkbox" data-action="toggle">
+              <svg viewBox="0 0 20 20"><polyline points="4,11 8,15 16,6"></polyline></svg>
+            </div>`;
         return `
           <div class="task-item ${done ? 'done' : ''}" data-id="${t.id}">
-            <div class="checkbox" data-action="toggle">
-              <svg viewBox="0 0 20 20"><polyline points="4,11 8,15 16,6"></polyline></svg>
-            </div>
+            ${leftEl}
             <div class="task-body">
               <div class="task-title">
                 <span class="cat-dot ${t.category}"></span>
@@ -2220,10 +2454,22 @@
       for (const ev of state.events) {
         if (!ev.recurring) {
           if (ev.endDate < minDs || ev.startDate > maxDs) continue;
+          const isMulti = ev.startDate !== ev.endDate;
           for (const ds of cellDates) {
             if (ev.startDate <= ds && ds <= ev.endDate) {
               if (!byDate.has(ds)) byDate.set(ds, []);
-              byDate.get(ds).push({ ev, text: chipDisplayText(ev, ds) });
+              let span = '';
+              if (isMulti) {
+                const isRowStart = cellDates.indexOf(ds) % 7 === 0;
+                const isRowEnd = cellDates.indexOf(ds) % 7 === 6;
+                const isFirst = ds === ev.startDate || isRowStart;
+                const isLast = ds === ev.endDate || isRowEnd;
+                if (isFirst && isLast) span = '';
+                else if (isFirst) span = 'span-start';
+                else if (isLast) span = 'span-end';
+                else span = 'span-mid';
+              }
+              byDate.get(ds).push({ ev, text: chipDisplayText(ev, ds), span });
             }
           }
         } else {
@@ -2231,9 +2477,15 @@
             const occ = recurringOccurrenceForYear(ev, y);
             if (occ && occ >= minDs && occ <= maxDs) {
               if (!byDate.has(occ)) byDate.set(occ, []);
-              byDate.get(occ).push({ ev, text: chipDisplayText(ev, occ) });
+              byDate.get(occ).push({ ev, text: chipDisplayText(ev, occ), span: '' });
             }
           }
+        }
+        // 100일 단위 기념일 가상 칩
+        const milestones = getHundredDayMilestones(ev, minDs, maxDs);
+        for (const ms of milestones) {
+          if (!byDate.has(ms.date)) byDate.set(ms.date, []);
+          byDate.get(ms.date).push({ ev: { ...ev, _virtual: true }, text: ms.title, span: '' });
         }
       }
 
@@ -2250,26 +2502,36 @@
         const visible = dayItems.slice(0, MAX_CHIPS);
         const extra = dayItems.length - visible.length;
 
-        const chipsHtml = visible.map(({ ev, text }) => {
-          const linked = findLinkedTask(ev.id, ds);
-          const done = linked ? isTaskCompletedOn(linked, ds) : false;
-          const cls = 'chip' + (done ? ' done' : '');
+        // Collect special emojis for the date header
+        let specialEmojis = '';
+        for (const { ev } of dayItems) {
+          if (ev.kind === 'birthday') { specialEmojis += '🎂'; break; }
+          if (ev.kind === 'anniversary') { specialEmojis += '🎉'; break; }
+        }
+        const specialEmojiHtml = specialEmojis
+          ? `<span class="weather-emoji">${specialEmojis}</span>` : '';
+
+        const chipsHtml = visible.map(({ ev, text, span }) => {
+          const chipText = ev._virtual ? text
+            : (ev.kind === 'birthday') ? (ev.title || '')
+            : (ev.kind === 'anniversary') ? text.replace(/^🎉\s*/, '')
+            : text;
+          const spanCls = span ? ` ${span}` : '';
           return `
-            <div class="${cls}" data-event-id="${ev.id}" style="${eventChipStyle(ev.color)}" title="${escapeHtml(text)}">
-              ${escapeHtml(text)}
+            <div class="chip${spanCls}" data-event-id="${ev.id}" style="${eventChipStyle(ev.color)}" title="${escapeHtml(text)}">
+              ${escapeHtml(chipText)}
             </div>
           `;
         }).join('') + (extra > 0 ? `<div class="more-chip">+${extra} more</div>` : '');
 
-        // 날씨 이모지 (오늘 ~ +15일, 일별 예보 있을 때만)
-        let emojiHtml = '';
+        let weatherEmojiHtml = '';
         if (Weather && Weather.getPrefs && Weather.getPrefs().enabled) {
           const diff = daysFromToday(ds);
           if (diff >= 0 && diff <= 15) {
             const daily = Weather.getDailyForDate(ds);
             if (daily) {
               const em = weatherEmoji(daily.code, true);
-              if (em) emojiHtml = `<span class="weather-emoji">${em}</span>`;
+              if (em) weatherEmojiHtml = `<span class="weather-emoji">${em}</span>`;
             }
           }
         }
@@ -2278,7 +2540,8 @@
           <div class="${classes.join(' ')}" data-date="${ds}">
             <div class="cell-head">
               <div class="num">${d.getDate()}</div>
-              ${emojiHtml}
+              ${specialEmojiHtml}
+              ${weatherEmojiHtml}
             </div>
             <div class="chips">${chipsHtml}</div>
           </div>
@@ -2313,27 +2576,123 @@
     });
 
     // ---------- Month navigation ----------
-    function changeMonth(delta) {
-      let { year, month } = state.viewMonth;
-      month += delta;
-      if (month < 0) { month = 11; year--; }
-      if (month > 11) { month = 0; year++; }
-      state.viewMonth = { year, month };
-      renderMonthGrid();
+    let monthAnimating = false;
+    function changeMonth(delta, animate) {
+      if (monthAnimating) return;
       const grid = document.getElementById('monthGrid');
-      if (grid.animate) {
-        grid.animate(
-          [
-            { opacity: 0, transform: `translateX(${delta > 0 ? 12 : -12}px)` },
-            { opacity: 1, transform: 'translateX(0)' }
-          ],
-          { duration: 200, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
-        );
+      if (animate && grid.animate) {
+        monthAnimating = true;
+        const outClass = delta > 0 ? 'slide-out-left' : 'slide-out-right';
+        const inClass = delta > 0 ? 'slide-in-right' : 'slide-in-left';
+        grid.classList.add(outClass);
+        setTimeout(() => {
+          grid.classList.remove(outClass);
+          let { year, month } = state.viewMonth;
+          month += delta;
+          if (month < 0) { month = 11; year--; }
+          if (month > 11) { month = 0; year++; }
+          state.viewMonth = { year, month };
+          renderMonthGrid();
+          grid.classList.add(inClass);
+          setTimeout(() => {
+            grid.classList.remove(inClass);
+            monthAnimating = false;
+          }, 250);
+        }, 250);
+      } else {
+        let { year, month } = state.viewMonth;
+        month += delta;
+        if (month < 0) { month = 11; year--; }
+        if (month > 11) { month = 0; year++; }
+        state.viewMonth = { year, month };
+        renderMonthGrid();
       }
     }
 
-    document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
-    document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
+    function jumpToMonth(year, month) {
+      state.viewMonth = { year, month };
+      renderMonthGrid();
+    }
+
+    document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1, true));
+    document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1, true));
+
+    // ---------- Month swipe ----------
+    (function () {
+      const wrapper = document.getElementById('monthGridWrapper');
+      let startX = 0, startY = 0, swiping = false;
+      wrapper.addEventListener('touchstart', (e) => {
+        if (monthAnimating) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        swiping = true;
+      }, { passive: true });
+      wrapper.addEventListener('touchmove', (e) => {
+        if (!swiping) return;
+      }, { passive: true });
+      wrapper.addEventListener('touchend', (e) => {
+        if (!swiping) return;
+        swiping = false;
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const dx = endX - startX;
+        const dy = endY - startY;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+          changeMonth(dx < 0 ? 1 : -1, true);
+        }
+      });
+    })();
+
+    // ---------- Year/Month Picker ----------
+    (function () {
+      const picker = document.getElementById('monthPicker');
+      const yearEl = document.getElementById('pickerYear');
+      const monthsEl = document.getElementById('pickerMonths');
+      const titleEl = document.getElementById('monthTitle');
+      let pickerYear = state.viewMonth.year;
+      const MONTH_NAMES = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+      function renderPicker() {
+        yearEl.textContent = pickerYear + '년';
+        monthsEl.innerHTML = MONTH_NAMES.map((name, i) => {
+          const isCurrent = (pickerYear === state.viewMonth.year && i === state.viewMonth.month);
+          return `<button type="button" class="picker-month${isCurrent ? ' current' : ''}" data-month="${i}">${name}</button>`;
+        }).join('');
+      }
+
+      function openPicker() {
+        pickerYear = state.viewMonth.year;
+        renderPicker();
+        picker.classList.add('open');
+      }
+      function closePicker() {
+        picker.classList.remove('open');
+      }
+
+      titleEl.addEventListener('click', () => {
+        if (picker.classList.contains('open')) { closePicker(); return; }
+        openPicker();
+      });
+
+      document.getElementById('pickerPrevYear').addEventListener('click', () => {
+        if (pickerYear > 2020) { pickerYear--; renderPicker(); }
+      });
+      document.getElementById('pickerNextYear').addEventListener('click', () => {
+        if (pickerYear < 2030) { pickerYear++; renderPicker(); }
+      });
+      monthsEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.picker-month');
+        if (!btn) return;
+        const m = +btn.dataset.month;
+        jumpToMonth(pickerYear, m);
+        closePicker();
+      });
+      document.addEventListener('click', (e) => {
+        if (!picker.classList.contains('open')) return;
+        if (picker.contains(e.target) || titleEl.contains(e.target)) return;
+        closePicker();
+      });
+    })();
 
     // ---------- Month grid: tap + long-press ----------
     (function () {
@@ -2599,8 +2958,8 @@
 
       const KINDS = [
         { key: 'normal',      label: '일반' },
-        { key: 'birthday',    label: '생일' },
-        { key: 'anniversary', label: '기념일' }
+        { key: 'birthday',    label: '🎂 생일' },
+        { key: 'anniversary', label: '🎉 기념일' }
       ];
       const RANGES = [
         { key: 'single', label: '하루 일정' },
@@ -2637,7 +2996,11 @@
         if (isSpecial) {
           rangeField.style.display = 'none';
           endWrap.style.display = 'none';
-          lunarRow.style.display = '';
+          lunarRow.style.display = draft.kind === 'birthday' ? '' : 'none';
+          if (draft.kind === 'anniversary') {
+            lunarBox.checked = false;
+            lunarPreview.textContent = '';
+          }
           draft.range = 'single';
           if (startInput.value) endInput.value = startInput.value;
         } else {
@@ -2764,8 +3127,7 @@
           lunarIsLeap: false
         };
 
-        if (isSpecial && lunarBox.checked) {
-          // 입력한 월/일을 음력 날짜 그대로 사용 (사용자가 음력 월/일을 직접 입력)
+        if (draft.kind === 'birthday' && lunarBox.checked) {
           const [, m, d] = startDate.split('-').map(Number);
           payload.calendarType = 'lunar';
           payload.lunarMonth = m;
@@ -3333,22 +3695,6 @@
       reader.readAsText(file);
     }
 
-    document.getElementById('settingsExport').addEventListener('click', () => {
-      document.getElementById('settingsMenu').classList.remove('open');
-      exportData();
-      localStorage.setItem('dayflow.lastBackupAt', String(Date.now()));
-      document.getElementById('settingsBtn').classList.remove('has-notif');
-      showToast('백업 파일을 저장했어요');
-    });
-    document.getElementById('settingsImport').addEventListener('click', () => {
-      document.getElementById('settingsMenu').classList.remove('open');
-      document.getElementById('importFile').click();
-    });
-    document.getElementById('importFile').addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (file) importData(file);
-      e.target.value = '';
-    });
 
     // ---------- Install guide modal ----------
     (function () {
@@ -3407,20 +3753,7 @@
       });
     })();
 
-    // ---------- Weekly backup reminder ----------
-    function checkBackupReminder() {
-      if (!isStandalone()) return;
-      const last = +localStorage.getItem('dayflow.lastBackupAt') || 0;
-      if (state.tasks.length === 0 && state.events.length === 0) return;
-      const days = last ? Math.floor((Date.now() - last) / 86400000) : null;
-      const btn = document.getElementById('settingsBtn');
-      if (last === 0 || days >= 7) {
-        btn.classList.add('has-notif');
-        btn.title = last === 0
-          ? '아직 백업한 적이 없어요'
-          : `백업한 지 ${days}일 지났어요`;
-      }
-    }
+    function checkBackupReminder() {}
 
     // 콘솔 테스트용
     window.Events = Events;
@@ -3633,7 +3966,7 @@
     // ---------- Ready log ----------
     (function () {
       const td = todayStr();
-      const todayTasks = tasksForDate(td);
+      const todayTasks = tasksForDate(td).filter((t) => t.source !== 'event');
       const done = todayTasks.filter((t) => isTaskCompletedOn(t, td)).length;
       const pct = todayTasks.length ? Math.round((done / todayTasks.length) * 100) : 0;
       console.log('DayFlow ready ✓');
