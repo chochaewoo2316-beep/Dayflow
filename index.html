@@ -25,66 +25,76 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2308090A'/%3E%3Ctext x='90' y='130' font-family='-apple-system,Helvetica,Arial,sans-serif' font-size='124' font-weight='800' text-anchor='middle' fill='%23F5A524'%3ED%3C/text%3E%3C/svg%3E">
   <link rel="manifest" href='data:application/manifest+json,{"name"%3A"DayFlow"%2C"short_name"%3A"DayFlow"%2C"start_url"%3A"./"%2C"display"%3A"standalone"%2C"background_color"%3A"%2308090A"%2C"theme_color"%3A"%2308090A"%2C"orientation"%3A"portrait"}'>
   <title>DayFlow</title>
+  <script>
+    // 렌더 전 테마 적용 — 깜빡임 방지
+    (function(){
+      var t = 'dark';
+      try { t = localStorage.getItem('dayflow.theme') || 'dark'; } catch(e){}
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <style>
     :root {
-      /* Linear color system — light */
-      --bg-primary:   #FFFFFF;
-      --bg-secondary: #F7F8F9;
-      --bg-tertiary:  #EEEFF1;
-
-      --text-primary:   #0F1011;
-      --text-secondary: #6B7280;
-      --text-tertiary:  #9CA3AF;
-
-      --separator:        #E6E8EB;
-      --separator-opaque: #E6E8EB;
-
       --accent:        #F5A524;
       --accent-hover:  #FFB733;
-      --accent-muted:  rgba(245, 165, 36, 0.12);
-
-      /* Compat aliases — legacy naming, remapped */
       --system-blue:   #F5A524;
       --system-pink:   #E65C5C;
       --system-purple: #4AB482;
       --system-red:    #E65C5C;
       --system-green:  #4AB482;
       --system-orange: #F5A524;
-
-      --shadow-card:  0 0 0 1px var(--separator);
-      --shadow-float: 0 2px 10px rgba(245, 165, 36, 0.28);
-
       --radius-sm: 4px;
       --radius-md: 6px;
       --radius-lg: 8px;
-
       --safe-top:    env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-primary:   #08090A;
-        --bg-secondary: #1C1D1F;
-        --bg-tertiary:  #242528;
+    /* ===== Dark theme (default) ===== */
+    [data-theme="dark"] {
+      --bg-primary:   #08090A;
+      --bg-secondary: #1C1D1F;
+      --bg-tertiary:  #242528;
+      --text-primary:   #F7F8F8;
+      --text-secondary: #8A8F98;
+      --text-tertiary:  #62656B;
+      --separator:        #26272B;
+      --separator-opaque: #26272B;
+      --accent-muted: rgba(245, 165, 36, 0.18);
+      --shadow-card:  0 0 0 1px var(--separator);
+      --shadow-float: 0 2px 12px rgba(245, 165, 36, 0.40);
+      --backdrop-alpha: 0.5;
+      --seg-active-bg: #2A2B2E;
+      --chip-bg-alpha: 0.18;
+    }
 
-        --text-primary:   #F7F8F8;
-        --text-secondary: #8A8F98;
-        --text-tertiary:  #62656B;
-
-        --separator:        #26272B;
-        --separator-opaque: #26272B;
-
-        --accent-muted: rgba(245, 165, 36, 0.18);
-
-        --shadow-card:  0 0 0 1px var(--separator);
-        --shadow-float: 0 2px 12px rgba(245, 165, 36, 0.40);
-      }
+    /* ===== Light theme ===== */
+    [data-theme="light"] {
+      --bg-primary:   #FFFFFF;
+      --bg-secondary: #F7F8F9;
+      --bg-tertiary:  #EEEFF1;
+      --text-primary:   #0F1011;
+      --text-secondary: #6B7280;
+      --text-tertiary:  #9CA3AF;
+      --separator:        #E6E8EB;
+      --separator-opaque: #E6E8EB;
+      --accent-muted: rgba(245, 165, 36, 0.12);
+      --shadow-card:  0 0 0 1px var(--separator);
+      --shadow-float: 0 2px 10px rgba(245, 165, 36, 0.28);
+      --backdrop-alpha: 0.3;
+      --seg-active-bg: #FFFFFF;
+      --chip-bg-alpha: 0.15;
     }
 
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+    }
+    body.transitions-enabled,
+    body.transitions-enabled *,
+    body.transitions-enabled *::before,
+    body.transitions-enabled *::after {
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
     }
 
     html, body {
@@ -116,7 +126,7 @@
 
     /* ---------- Top / Bottom Panes ---------- */
     .top-pane {
-      flex: 1.15 1 0;
+      flex: 1.4 1 0;
       min-height: 0;
       display: flex;
       flex-direction: column;
@@ -159,6 +169,24 @@
     @keyframes ptr-spin {
       to { transform: rotate(360deg); }
     }
+
+    /* ---------- Theme toggle ---------- */
+    .theme-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 8px;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .theme-btn:active { background: var(--bg-tertiary); }
 
     /* ---------- Settings menu ---------- */
     .settings-menu {
@@ -422,6 +450,7 @@
       border-radius: 6px;
       background: transparent;
       box-shadow: none;
+      transform: translateY(20px);
     }
 
     /* Weekly Calendar Strip */
@@ -478,6 +507,7 @@
     }
     .fab:hover { background: var(--accent-hover); }
     .fab:active { transform: scale(0.94); }
+    [data-theme="light"] .fab { box-shadow: var(--shadow-float), 0 2px 8px rgba(0,0,0,0.15); }
 
     /* ---------- Progress Ring ---------- */
     .progress-ring {
@@ -559,7 +589,7 @@
       border-radius: 50%;
       background: transparent;
     }
-    .week-day.has-tasks .dot { background: var(--accent); }
+    .week-day.has-events .dot { background: var(--accent); }
     .week-day .evt-label {
       font-size: 9px;
       line-height: 1.1;
@@ -656,12 +686,9 @@
     }
     .segmented button:hover { color: var(--text-primary); }
     .segmented button.active {
-      background: var(--bg-primary);
+      background: var(--seg-active-bg);
       color: var(--text-primary);
       box-shadow: 0 0 0 1px var(--separator);
-    }
-    @media (prefers-color-scheme: dark) {
-      .segmented button.active { background: #2A2B2E; }
     }
 
     /* ---------- Task Item ---------- */
@@ -794,7 +821,7 @@
     .backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, var(--backdrop-alpha));
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.25s ease;
@@ -1054,7 +1081,7 @@
     .install-modal {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0, 0, 0, var(--backdrop-alpha));
       display: none;
       align-items: center;
       justify-content: center;
@@ -1137,7 +1164,8 @@
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="app" id="appContainer">
+    <div class="ptr-indicator" id="ptrIndicator"><span class="ptr-arrow">↓</span><span class="ptr-text">당겨서 새로고침</span></div>
     <section class="top-pane" aria-label="월간 캘린더">
       <div class="month-nav">
         <div class="month-title" id="monthTitle"></div>
@@ -1171,7 +1199,6 @@
     <div class="hairline"></div>
 
     <section class="bottom-pane" id="bottomPane">
-      <div class="ptr-indicator" id="ptrIndicator"><span class="ptr-arrow">↓</span><span class="ptr-text">당겨서 새로고침</span></div>
       <header class="header">
         <div class="header-date">
           <div class="label" id="todayLabel">TODAY</div>
@@ -1193,6 +1220,11 @@
   </div>
 
   <div class="settings-menu" id="settingsMenu" role="menu">
+    <button type="button" id="settingsTheme">
+      <span id="settingsThemeLabel">다크 모드</span>
+      <span class="chk"></span>
+    </button>
+    <div class="sep"></div>
     <button type="button" id="settingsRefresh">위치 새로고침</button>
     <button type="button" id="settingsCity">도시 수동 입력</button>
     <div class="sep"></div>
@@ -1796,7 +1828,8 @@
     }
     function eventChipStyle(colorStr) {
       const { r, g, b } = parseRgb(colorStr);
-      return `background: rgba(${r},${g},${b},0.18); color: rgb(${r},${g},${b}); border-left-color: rgb(${r},${g},${b});`;
+      const alpha = getComputedStyle(document.documentElement).getPropertyValue('--chip-bg-alpha').trim() || '0.18';
+      return `background: rgba(${r},${g},${b},${alpha}); color: rgb(${r},${g},${b}); border-left-color: rgb(${r},${g},${b});`;
     }
 
     // ---------- Event helpers ----------
@@ -2050,21 +2083,18 @@
       const today = todayStr();
       el.innerHTML = dates.map((dt) => {
         const ds = toDateStr(dt);
-        const dayTasks = tasksForDate(ds);
         const dayEvents = eventsOnDate(ds);
         const classes = ['week-day'];
         if (ds === state.selectedDate) classes.push('selected');
         if (ds === today) classes.push('today');
-        if (dayTasks.length > 0) classes.push('has-tasks');
+        if (dayEvents.length > 0) classes.push('has-events');
 
-        // 생일/기념일/일정 라벨 (최대 1개만 표시)
-        let evtHtml = '';
-        if (dayEvents.length > 0) {
-          const ev = dayEvents[0];
+        // 일정 라벨 최대 3개 표시
+        const evtHtml = dayEvents.slice(0, 3).map((ev) => {
           const label = chipDisplayText(ev, ds);
           const shortLabel = label.length > 5 ? label.slice(0, 5) + '…' : label;
-          evtHtml = `<div class="evt-label" title="${escapeHtml(label)}">${escapeHtml(shortLabel)}</div>`;
-        }
+          return `<div class="evt-label" title="${escapeHtml(label)}">${escapeHtml(shortLabel)}</div>`;
+        }).join('');
 
         return `
           <div class="${classes.join(' ')}" data-date="${ds}">
@@ -3463,23 +3493,53 @@
       console.groupEnd();
     }
 
+    // ---------- Theme Toggle (설정 메뉴 내) ----------
+    (function () {
+      const btn = document.getElementById('settingsTheme');
+      const label = document.getElementById('settingsThemeLabel');
+
+      function currentTheme() {
+        return document.documentElement.getAttribute('data-theme') || 'dark';
+      }
+      function sync() {
+        const isDark = currentTheme() === 'dark';
+        label.textContent = isDark ? '다크 모드' : '라이트 모드';
+        btn.classList.toggle('active', isDark);
+      }
+      btn.addEventListener('click', () => {
+        const next = currentTheme() === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('dayflow.theme', next); } catch (_) {}
+        sync();
+        if (typeof render === 'function') render();
+      });
+      sync();
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.body.classList.add('transitions-enabled');
+        });
+      });
+    })();
+
     // ---------- Pull to Refresh ----------
     (function () {
-      const pane = document.getElementById('bottomPane');
+      const app = document.getElementById('appContainer');
       const indicator = document.getElementById('ptrIndicator');
       const textEl = indicator.querySelector('.ptr-text');
       const THRESHOLD = 70;
       let startY = 0;
       let pulling = false;
 
-      pane.addEventListener('touchstart', (e) => {
-        if (pane.scrollTop <= 0) {
+      app.addEventListener('touchstart', (e) => {
+        const bp = document.getElementById('bottomPane');
+        if (bp.scrollTop <= 0) {
           startY = e.touches[0].clientY;
           pulling = true;
         }
       }, { passive: true });
 
-      pane.addEventListener('touchmove', (e) => {
+      app.addEventListener('touchmove', (e) => {
         if (!pulling) return;
         const dy = e.touches[0].clientY - startY;
         if (dy < 0) { indicator.style.height = '0'; return; }
@@ -3495,7 +3555,7 @@
         }
       }, { passive: true });
 
-      pane.addEventListener('touchend', () => {
+      app.addEventListener('touchend', () => {
         if (!pulling) return;
         pulling = false;
         const h = parseFloat(indicator.style.height) || 0;
