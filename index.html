@@ -98,7 +98,7 @@
       line-height: 1.45;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      overscroll-behavior-y: none;
+      overscroll-behavior-y: contain;
       letter-spacing: -0.01em;
     }
 
@@ -135,42 +135,29 @@
       padding-bottom: calc(var(--safe-bottom) + 96px);
     }
 
-    /* ---------- Top Bar (location + settings) ---------- */
-    .top-bar {
+    /* ---------- Pull to refresh ---------- */
+    .ptr-indicator {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+      height: 0;
+      overflow: hidden;
+      transition: height 0.2s ease;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      padding: 6px 2px 0;
-      flex-shrink: 0;
+      justify-content: center;
     }
-    .loc-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--separator);
-      color: var(--text-secondary);
-      padding: 4px 9px;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 11px;
-      font-weight: 500;
-      cursor: pointer;
-      max-width: 70%;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      transition: background 0.12s ease, color 0.12s ease;
+    .ptr-indicator .ptr-arrow {
+      display: inline-block;
+      transition: transform 0.2s ease;
+      margin-right: 6px;
     }
-    .loc-pill:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-    .loc-pill .loc-emoji { font-size: 12px; line-height: 1; }
-    .loc-pill .offline {
-      color: var(--system-red);
-      font-size: 9.5px;
-      margin-left: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
+    .ptr-indicator.ready .ptr-arrow { transform: rotate(180deg); }
+    .ptr-indicator.refreshing .ptr-arrow {
+      animation: ptr-spin 0.6s linear infinite;
+    }
+    @keyframes ptr-spin {
+      to { transform: rotate(360deg); }
     }
 
     /* ---------- Settings menu ---------- */
@@ -405,16 +392,16 @@
       letter-spacing: 0.1px;
     }
 
-    /* Header (bottom pane) */
+    /* Header (bottom pane) — compact */
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 20px 4px;
+      padding: 10px 16px 2px;
     }
 
     .header-date .label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--accent);
       text-transform: uppercase;
@@ -422,16 +409,16 @@
     }
 
     .header-date .title {
-      font-size: 17px;
+      font-size: 14px;
       font-weight: 600;
-      letter-spacing: -0.2px;
-      margin-top: 2px;
+      letter-spacing: -0.15px;
+      margin-top: 1px;
       color: var(--text-primary);
     }
 
     .progress-ring {
-      width: 44px;
-      height: 44px;
+      width: 36px;
+      height: 36px;
       border-radius: 6px;
       background: transparent;
       box-shadow: none;
@@ -523,7 +510,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--text-primary);
       letter-spacing: -0.2px;
@@ -573,6 +560,17 @@
       background: transparent;
     }
     .week-day.has-tasks .dot { background: var(--accent); }
+    .week-day .evt-label {
+      font-size: 9px;
+      line-height: 1.1;
+      color: var(--text-secondary);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+      padding: 0 2px;
+    }
     .week-day.selected .dd {
       background: var(--accent);
       color: #fff;
@@ -581,57 +579,55 @@
     .week-day.selected.today .dd { background: var(--accent); color: #fff; }
     .week-day.selected .wd { color: var(--accent); }
 
-    /* ---------- Weather Card ---------- */
-    .weather-card {
-      margin: 10px 16px 0;
-      padding: 10px 12px 12px;
-      background: var(--bg-secondary);
-      border: 1px solid var(--separator);
-      border-radius: var(--radius-md);
+    /* ---------- Weather Inline Bar ---------- */
+    .weather-bar {
+      padding: 4px 16px 6px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       display: none;
     }
-    .weather-card.show { display: block; }
-    .wc-head {
+    .weather-bar.show { display: block; }
+    .weather-bar .wb-sep {
+      margin: 0 6px;
+      opacity: 0.5;
+    }
+
+    /* ---------- Weather accordion (task list top) ---------- */
+    .weather-accordion {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--separator);
+      cursor: pointer;
+      user-select: none;
+      display: none;
+    }
+    .weather-accordion.show { display: block; }
+    .weather-accordion .wa-summary {
+      font-size: 12px;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 4px;
     }
-    .wc-head .big-emoji {
-      font-size: 26px;
-      line-height: 1;
-      flex-shrink: 0;
+    .weather-accordion .wa-summary .wa-chevron {
+      margin-left: auto;
+      font-size: 10px;
+      transition: transform 0.15s ease;
+      opacity: 0.5;
     }
-    .wc-head .wc-temp .temps {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      letter-spacing: -0.1px;
+    .weather-accordion.open .wa-chevron { transform: rotate(90deg); }
+    .weather-accordion .wa-detail {
+      display: none;
+      padding-top: 6px;
     }
-    .wc-head .wc-temp .prob {
-      font-size: 11px;
+    .weather-accordion.open .wa-detail { display: block; }
+    .weather-accordion .wa-detail .rain-line {
+      font-size: 11.5px;
       color: var(--text-secondary);
-      margin-top: 2px;
-    }
-    .wc-details {
-      margin-top: 9px;
-      padding-top: 9px;
-      border-top: 1px solid var(--separator);
-    }
-    .wc-details .rain-line {
-      font-size: 12px;
-      color: var(--text-primary);
       padding: 2px 0;
       font-variant-numeric: tabular-nums;
-    }
-    .wc-details .no-rain {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-    .wc-empty {
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-align: center;
-      padding: 6px 0;
     }
 
     /* ---------- Segmented Control ---------- */
@@ -1143,16 +1139,6 @@
 <body>
   <div class="app">
     <section class="top-pane" aria-label="월간 캘린더">
-      <div class="top-bar">
-        <button type="button" class="loc-pill" id="locPill">
-          <span class="loc-emoji" id="locEmoji"></span>
-          <span id="locLabel">위치 확인 중…</span>
-          <span class="offline" id="locOffline" style="display:none">OFFLINE</span>
-        </button>
-        <button type="button" class="nav-btn" id="settingsBtn" aria-label="설정">
-          <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.4"></circle><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"></path></svg>
-        </button>
-      </div>
       <div class="month-nav">
         <div class="month-title" id="monthTitle"></div>
         <div class="nav-actions">
@@ -1164,6 +1150,9 @@
           </button>
           <button type="button" class="nav-btn" id="nextMonth" aria-label="다음 달">
             <svg viewBox="0 0 20 20"><path d="M8 5l5 5-5 5"></path></svg>
+          </button>
+          <button type="button" class="nav-btn" id="settingsBtn" aria-label="설정">
+            <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.4"></circle><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"></path></svg>
           </button>
         </div>
       </div>
@@ -1181,7 +1170,8 @@
 
     <div class="hairline"></div>
 
-    <section class="bottom-pane">
+    <section class="bottom-pane" id="bottomPane">
+      <div class="ptr-indicator" id="ptrIndicator"><span class="ptr-arrow">↓</span><span class="ptr-text">당겨서 새로고침</span></div>
       <header class="header">
         <div class="header-date">
           <div class="label" id="todayLabel">TODAY</div>
@@ -1190,7 +1180,7 @@
         <div class="progress-ring" id="progressRing" aria-label="진행률"></div>
       </header>
 
-      <section class="weather-card" id="weatherCard" aria-label="날씨"></section>
+      <div class="weather-bar" id="weatherBar" aria-label="날씨"></div>
 
       <section class="week-strip" id="weekStrip" aria-label="주간 캘린더"></section>
 
@@ -1310,7 +1300,7 @@
 
     <div class="field" id="evtLunarRow" style="display:none">
       <label class="inline-check">
-        <input type="checkbox" id="evtLunarBox"> 음력 생일로 챙기기
+        <input type="checkbox" id="evtLunarBox"> 음력 날짜로 입력 (매년 양력 날짜가 달라짐)
       </label>
       <div class="lunar-preview" id="evtLunarPreview"></div>
     </div>
@@ -1363,16 +1353,16 @@
       0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
       0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
       0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
-      0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+      0x06566,0x0d4a0,0x0ea50,0x16a95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
       0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
       0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
       0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
       0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
       0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
-      0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+      0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,
       0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
       0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
-      0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+      0x07954,0x06aa0,0x0ad50,0x05b52,0x0a550,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
       0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
       0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
       0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
@@ -1923,7 +1913,7 @@
       return {
         id: uuid(),
         title: chipDisplayText(ev, dateStr),
-        category: categoryForEventColor(ev.color),
+        category: 'schedule',
         type: 'once',
         date: dateStr,
         completed: false,
@@ -1961,6 +1951,18 @@
 
     state.tasks = Store.load();
     state.events = Events.load();
+
+    // 기존 event-linked task의 카테고리를 schedule로 마이그레이션
+    (function () {
+      let changed = false;
+      for (const t of state.tasks) {
+        if (t.source === 'event' && t.category !== 'schedule') {
+          t.category = 'schedule';
+          changed = true;
+        }
+      }
+      if (changed) Store.save(state.tasks);
+    })();
 
     function setSelectedDate(ds) {
       state.selectedDate = ds;
@@ -2049,15 +2051,27 @@
       el.innerHTML = dates.map((dt) => {
         const ds = toDateStr(dt);
         const dayTasks = tasksForDate(ds);
+        const dayEvents = eventsOnDate(ds);
         const classes = ['week-day'];
         if (ds === state.selectedDate) classes.push('selected');
         if (ds === today) classes.push('today');
         if (dayTasks.length > 0) classes.push('has-tasks');
+
+        // 생일/기념일/일정 라벨 (최대 1개만 표시)
+        let evtHtml = '';
+        if (dayEvents.length > 0) {
+          const ev = dayEvents[0];
+          const label = chipDisplayText(ev, ds);
+          const shortLabel = label.length > 5 ? label.slice(0, 5) + '…' : label;
+          evtHtml = `<div class="evt-label" title="${escapeHtml(label)}">${escapeHtml(shortLabel)}</div>`;
+        }
+
         return `
           <div class="${classes.join(' ')}" data-date="${ds}">
             <div class="wd">${WEEKDAY_LABELS[dt.getDay()]}</div>
             <div class="dd">${dt.getDate()}</div>
             <div class="dot"></div>
+            ${evtHtml}
           </div>
         `;
       }).join('');
@@ -2241,7 +2255,7 @@
       renderMonthGrid();
       renderWeekList();
       if (typeof renderHeaderLocation === 'function') renderHeaderLocation();
-      if (typeof renderWeatherCard === 'function') renderWeatherCard();
+      if (typeof renderWeatherBar === 'function') renderWeatherBar();
     }
 
     // ---------- Event delegation ----------
@@ -2587,9 +2601,13 @@
           lunarPreview.textContent = '';
           return;
         }
-        const [y, m, d] = startInput.value.split('-').map(Number);
-        const l = solarToLunar(y, m, d);
-        lunarPreview.textContent = formatLunarKorean(l.year, l.month, l.day, l.isLeap);
+        // 입력한 월/일을 음력으로 간주 → 올해 양력 날짜를 보여줌
+        const [, m, d] = startInput.value.split('-').map(Number);
+        const now = new Date();
+        const thisYear = now.getFullYear();
+        const solar = lunarToSolar(thisYear, m, d, false);
+        lunarPreview.textContent =
+          `음력 ${m}월 ${d}일 → ${thisYear}년 양력 ${solar.month}월 ${solar.day}일`;
       }
 
       function updateSaveState() {
@@ -2693,12 +2711,12 @@
         };
 
         if (isSpecial && lunarBox.checked) {
-          const [y, m, d] = startDate.split('-').map(Number);
-          const l = solarToLunar(y, m, d);
+          // 입력한 월/일을 음력 날짜 그대로 사용 (사용자가 음력 월/일을 직접 입력)
+          const [, m, d] = startDate.split('-').map(Number);
           payload.calendarType = 'lunar';
-          payload.lunarMonth = l.month;
-          payload.lunarDay = l.day;
-          payload.lunarIsLeap = l.isLeap;
+          payload.lunarMonth = m;
+          payload.lunarDay = d;
+          payload.lunarIsLeap = false;
         }
 
         const saved = editingId
@@ -3072,103 +3090,98 @@
     }
 
     function renderHeaderLocation() {
-      const pill = document.getElementById('locPill');
-      const emoji = document.getElementById('locEmoji');
-      const label = document.getElementById('locLabel');
-      const offline = document.getElementById('locOffline');
-      const prefs = Weather.getPrefs();
-      const loc = Weather.getLocation();
-      const status = Weather.getStatus();
-
-      if (!prefs.enabled) {
-        label.textContent = '날씨 표시 꺼짐';
-        emoji.textContent = '';
-        offline.style.display = 'none';
-        pill.style.display = '';
-        return;
-      }
-
-      pill.style.display = '';
-      if (status === 'need-permission' || (!loc && status === 'error')) {
-        label.textContent = '위치 권한 필요';
-        emoji.textContent = '📍';
-        offline.style.display = 'none';
-        return;
-      }
-      if (!loc) {
-        label.textContent = status === 'loading' ? '위치 확인 중…' : '위치 없음';
-        emoji.textContent = '';
-        offline.style.display = 'none';
-        return;
-      }
-
-      const cur = Weather.getCurrent();
-      let emojiText = '';
-      let tempText = '';
-      if (cur) {
-        emojiText = weatherEmoji(cur.weather_code, cur.is_day !== 0);
-        if (typeof cur.temperature_2m === 'number') {
-          tempText = `${Math.round(cur.temperature_2m)}°`;
-        }
-      }
-      emoji.textContent = emojiText;
-      label.textContent = tempText ? `${loc.label} ${tempText}` : loc.label;
-      offline.style.display = status === 'offline' ? '' : 'none';
+      // 위치 pill 제거됨 — no-op
     }
 
-    function renderWeatherCard() {
-      const card = document.getElementById('weatherCard');
-      if (!card) return;
-      const prefs = Weather.getPrefs();
-      if (!prefs.enabled) { card.classList.remove('show'); card.innerHTML = ''; return; }
+    /** 비 구간 요약 텍스트 (한 줄용) */
+    function rainSummaryShort(periods) {
+      if (!periods || !periods.length) return '비 없음';
+      const p = periods[0];
+      const sh = p.start.replace(':00', '');
+      const eh = p.end.replace(':00', '');
+      const extra = periods.length > 1 ? ` 외 ${periods.length - 1}건` : '';
+      return `${sh}–${eh}시 비 (${p.maxProb}%)${extra}`;
+    }
 
+    /** 인라인 한 줄 바 (헤더 아래, 주간 스트립 위) */
+    function renderWeatherBar() {
+      const bar = document.getElementById('weatherBar');
+      if (!bar) return;
+      const prefs = Weather.getPrefs();
       const ds = state.selectedDate;
       const diff = daysFromToday(ds);
-      if (diff < 0 || diff > 15) {
-        card.classList.add('show');
-        card.innerHTML = `<div class="wc-empty">예보 없음</div>`;
+
+      if (!prefs.enabled || diff < 0 || diff > 15) {
+        bar.classList.remove('show');
         return;
       }
 
       const daily = Weather.getDailyForDate(ds);
       const hourly = Weather.getHourlyForDate(ds);
-      if (!daily && !hourly) {
-        card.classList.add('show');
-        card.innerHTML = `<div class="wc-empty">${Weather.getStatus() === 'loading' ? '예보 불러오는 중…' : '예보 없음'}</div>`;
-        return;
-      }
+      if (!daily && !hourly) { bar.classList.remove('show'); return; }
 
-      const code = daily ? daily.code : (hourly && hourly[12] ? hourly[12].code : null);
+      const code = daily ? daily.code : null;
       const emoji = weatherEmoji(code, true);
       const tMin = daily ? Math.round(daily.tMin) : '-';
       const tMax = daily ? Math.round(daily.tMax) : '-';
       const probMax = daily ? Math.round(daily.probMax || 0) : 0;
-
       const periods = Weather.getRainPeriods(hourly);
-      let detailsHtml;
+      const rain = rainSummaryShort(periods);
+
+      bar.classList.add('show');
+      bar.innerHTML =
+        `${emoji} ${tMin}° / ${tMax}°` +
+        `<span class="wb-sep">·</span>강수 ${probMax}%` +
+        `<span class="wb-sep">·</span>${rain}`;
+    }
+
+    /** 아코디언 (task-list 맨 위, 접이식 상세) */
+    function renderWeatherAccordion() {
+      const acc = document.getElementById('weatherAccordion');
+      if (!acc) return;
+      const prefs = Weather.getPrefs();
+      const ds = state.selectedDate;
+      const diff = daysFromToday(ds);
+
+      if (!prefs.enabled || diff < 0 || diff > 15) {
+        acc.classList.remove('show');
+        return;
+      }
+
+      const daily = Weather.getDailyForDate(ds);
+      const hourly = Weather.getHourlyForDate(ds);
+      if (!daily && !hourly) { acc.classList.remove('show'); return; }
+
+      const code = daily ? daily.code : null;
+      const emoji = weatherEmoji(code, true);
+      const tMin = daily ? Math.round(daily.tMin) : '-';
+      const tMax = daily ? Math.round(daily.tMax) : '-';
+      const periods = Weather.getRainPeriods(hourly);
+      const rain = rainSummaryShort(periods);
+
+      let detailHtml;
       if (!periods.length) {
-        detailsHtml = `<div class="no-rain">오늘은 비 소식 없음</div>`;
+        detailHtml = `<div class="rain-line">오늘은 비 소식 없음</div>`;
       } else {
         const shown = periods.slice(0, 3);
-        detailsHtml = shown.map((p) =>
+        detailHtml = shown.map((p) =>
           `<div class="rain-line">${p.start} – ${p.end} 비 예정 (최대 ${p.maxProb}%)</div>`
         ).join('');
         if (periods.length > 3) {
-          detailsHtml += `<div class="rain-line">+더보기 (${periods.length - 3})</div>`;
+          detailHtml += `<div class="rain-line">+더보기 (${periods.length - 3})</div>`;
         }
       }
 
-      card.classList.add('show');
-      card.innerHTML = `
-        <div class="wc-head">
-          <span class="big-emoji">${emoji || '🌡️'}</span>
-          <div class="wc-temp">
-            <div class="temps">${tMin}° / ${tMax}°</div>
-            <div class="prob">강수확률 최대 ${probMax}%</div>
-          </div>
+      const wasOpen = acc.classList.contains('open');
+      acc.classList.add('show');
+      acc.innerHTML = `
+        <div class="wa-summary">
+          <span>${emoji} ${tMin}°/${tMax}° <span style="opacity:0.5">·</span> ${rain}</span>
+          <span class="wa-chevron">▶</span>
         </div>
-        <div class="wc-details">${detailsHtml}</div>
+        <div class="wa-detail">${detailHtml}</div>
       `;
+      if (wasOpen) acc.classList.add('open');
     }
 
     // ---------- Settings menu ----------
@@ -3221,16 +3234,6 @@
         render();
       });
 
-      document.getElementById('locPill').addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (Weather.getStatus() === 'need-permission') {
-          await Weather.ensureLocation(true);
-          await Weather.refresh(true);
-          render();
-        } else {
-          toggle();
-        }
-      });
     })();
 
     // ---------- Data Export / Import ----------
@@ -3442,8 +3445,91 @@
       console.log(`Standalone mode: ${isStandalone()}`);
       const wdata = (function () { try { return JSON.parse(localStorage.getItem('dayflow.weather') || 'null'); } catch (_) { return null; } })();
       console.log(`Counts: tasks=${state.tasks.length}, events=${state.events.length}, weather.daily=${wdata && wdata.daily ? wdata.daily.time.length : 0}`);
+      // 음력 변환 검증 (알려진 양력↔음력 대조)
+      const checks = [
+        { solar: [2024, 2, 10], lunar: [2024, 1, 1],  label: '2024 설날' },
+        { solar: [2023, 1, 22], lunar: [2023, 1, 1],  label: '2023 설날' },
+        { solar: [2025, 1, 29], lunar: [2025, 1, 1],  label: '2025 설날' },
+      ];
+      let lunarOk = true;
+      for (const c of checks) {
+        const got = solarToLunar(c.solar[0], c.solar[1], c.solar[2]);
+        const pass = got.year === c.lunar[0] && got.month === c.lunar[1] && got.day === c.lunar[2];
+        if (!pass) lunarOk = false;
+        console.log(`Lunar check [${c.label}]: ${c.solar.join('-')} → ${got.year}-${got.month}-${got.day} ${pass ? '✓' : '✗ (expected ' + c.lunar.join('-') + ')'}`);
+      }
+      if (lunarOk) console.log('Lunar calendar: all checks passed ✓');
+      else console.warn('Lunar calendar: some checks FAILED — table may need update');
       console.groupEnd();
     }
+
+    // ---------- Pull to Refresh ----------
+    (function () {
+      const pane = document.getElementById('bottomPane');
+      const indicator = document.getElementById('ptrIndicator');
+      const textEl = indicator.querySelector('.ptr-text');
+      const THRESHOLD = 70;
+      let startY = 0;
+      let pulling = false;
+
+      pane.addEventListener('touchstart', (e) => {
+        if (pane.scrollTop <= 0) {
+          startY = e.touches[0].clientY;
+          pulling = true;
+        }
+      }, { passive: true });
+
+      pane.addEventListener('touchmove', (e) => {
+        if (!pulling) return;
+        const dy = e.touches[0].clientY - startY;
+        if (dy < 0) { indicator.style.height = '0'; return; }
+        const h = Math.min(dy * 0.45, 80);
+        indicator.style.height = h + 'px';
+        indicator.style.transition = 'none';
+        if (h >= THRESHOLD * 0.45) {
+          indicator.classList.add('ready');
+          textEl.textContent = '놓으면 새로고침';
+        } else {
+          indicator.classList.remove('ready');
+          textEl.textContent = '당겨서 새로고침';
+        }
+      }, { passive: true });
+
+      pane.addEventListener('touchend', () => {
+        if (!pulling) return;
+        pulling = false;
+        const h = parseFloat(indicator.style.height) || 0;
+        if (h >= THRESHOLD * 0.45) {
+          indicator.classList.remove('ready');
+          indicator.classList.add('refreshing');
+          textEl.textContent = '새로고침 중…';
+          indicator.style.transition = 'height 0.2s ease';
+          indicator.style.height = '32px';
+          setTimeout(() => {
+            // 오늘 날짜로 복귀 + 전체 새로고침
+            const td = todayStr();
+            setSelectedDate(td);
+            render();
+            // 날씨도 갱신
+            (async () => {
+              try {
+                if (Weather.getPrefs().enabled) {
+                  await Weather.refresh(true);
+                  render();
+                }
+              } catch (_) {}
+            })();
+            indicator.classList.remove('refreshing');
+            indicator.style.transition = 'height 0.2s ease';
+            indicator.style.height = '0';
+          }, 400);
+        } else {
+          indicator.style.transition = 'height 0.2s ease';
+          indicator.style.height = '0';
+          indicator.classList.remove('ready');
+        }
+      });
+    })();
 
     // ---------- Bootstrap ----------
     Weather.load();
