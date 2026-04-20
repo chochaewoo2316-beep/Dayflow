@@ -1424,6 +1424,9 @@
     <div class="sep"></div>
     <button type="button" id="settingsInstall">홈 화면 추가 방법</button>
     <div class="sep"></div>
+    <button type="button" id="settingsCloudSync">
+      <span id="settingsCloudSyncLabel">클라우드 동기화 연결 (JSONBin)</span>
+    </button>
     <button type="button" id="settingsWidgetSync">
       <span id="settingsWidgetSyncLabel">위젯 자동 동기화 연결</span>
     </button>
@@ -2193,6 +2196,9 @@
       Persistence.mirror(key, { savedAt, value });
       updateSnapshots();
       if (typeof WidgetSync !== 'undefined') WidgetSync.queueWrite();
+      if (typeof CloudSync !== 'undefined' && !CloudSync.isApplyingRemote()) {
+        CloudSync.queuePush();
+      }
     }
 
     function parseRgb(str) {
@@ -4313,6 +4319,255 @@
       });
 
       WidgetSync.onChange(render);
+      render();
+    })();
+
+    // ---------- Cloud Sync (JSONBin.io) ----------
+    const CloudSync = (function () {
+      const CONFIG_KEY = 'dayflow.cloud.config';
+      const UPDATED_KEY = 'dayflow.cloud.updatedAt';
+      const BASE = 'https://api.jsonbin.io/v3';
+      const PUSH_DEBOUNCE_MS = 1200;
+      const POLL_MS = 5 * 60 * 1000; // 5분 (JSONBin 무료 한도 보호)
+
+      let config = _loadConfig();
+      let lastKnownUpdatedAt = parseInt(localStorage.getItem(UPDATED_KEY) || '0', 10) || 0;
+      let pushTimer = null, pollTimer = null;
+      let pulling = false, pushing = false, pendingPush = false;
+      let applyingRemote = false;
+      const listeners = new Set();
+
+      function _loadConfig() {
+        try {
+          const raw = localStorage.getItem(CONFIG_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_) { return null; }
+      }
+      function _saveConfig(cfg) {
+        if (cfg) localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+        else localStorage.removeItem(CONFIG_KEY);
+        config = cfg;
+        emit();
+      }
+      function emit() { listeners.forEach((fn) => { try { fn(); } catch (_) {} }); }
+      function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
+      function status() { return config ? 'connected' : 'disconnected'; }
+      function isApplyingRemote() { return applyingRemote; }
+      function getConfig() { return config; }
+
+      function _buildPayload() {
+        return {
+          app: 'DayFlow',
+          version: 1,
+          updatedAt: Date.now(),
+          tasks: state && state.tasks ? state.tasks : [],
+          events: state && state.events ? state.events : []
+        };
+      }
+
+      async function _get(apiKey, binId) {
+        const res = await fetch(`${BASE}/b/${binId}/latest`, {
+          headers: { 'X-Master-Key': apiKey, 'X-Bin-Meta': 'false' }
+        });
+        if (!res.ok) throw new Error('GET ' + res.status);
+        return res.json();
+      }
+      async function _put(apiKey, binId, payload) {
+        const res = await fetch(`${BASE}/b/${binId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': apiKey,
+            'X-Bin-Versioning': 'false'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('PUT ' + res.status);
+        return res.json();
+      }
+      async function _createBin(apiKey, payload) {
+        const res = await fetch(`${BASE}/b`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': apiKey,
+            'X-Bin-Private': 'true',
+            'X-Bin-Versioning': 'false',
+            'X-Bin-Name': 'dayflow'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('CREATE ' + res.status);
+        const j = await res.json();
+        return j.metadata && j.metadata.id;
+      }
+
+      async function _applyRemote(remote) {
+        if (!remote || typeof remote !== 'object') return;
+        applyingRemote = true;
+        try {
+          if (Array.isArray(remote.tasks)) {
+            state.tasks = remote.tasks;
+            persistSave('dayflow.tasks', state.tasks);
+          }
+          if (Array.isArray(remote.events)) {
+            state.events = remote.events.map(normalizeEvent);
+            persistSave('dayflow.events', state.events);
+          }
+          lastKnownUpdatedAt = +remote.updatedAt || Date.now();
+          localStorage.setItem(UPDATED_KEY, String(lastKnownUpdatedAt));
+          render();
+        } finally {
+          applyingRemote = false;
+        }
+      }
+
+      async function connect() {
+        const apiKey = (prompt('JSONBin.io Master Key를 입력하세요 (https://jsonbin.io 가입 후 API Keys 메뉴에서 확인):') || '').trim();
+        if (!apiKey) return false;
+        let binId = (prompt('기존 Bin ID가 있으면 입력, 새로 만들려면 빈 칸으로 두고 확인:') || '').trim();
+        try {
+          if (!binId) {
+            const payload = _buildPayload();
+            binId = await _createBin(apiKey, payload);
+            if (!binId) throw new Error('Bin ID 응답 없음');
+            lastKnownUpdatedAt = payload.updatedAt;
+            localStorage.setItem(UPDATED_KEY, String(lastKnownUpdatedAt));
+          } else {
+            const remote = await _get(apiKey, binId);
+            const hasData = remote && (
+              (Array.isArray(remote.events) && remote.events.length) ||
+              (Array.isArray(remote.tasks) && remote.tasks.length)
+            );
+            if (hasData) {
+              await _applyRemote(remote);
+            } else {
+              // 원격이 비어있으면 로컬을 밀어넣기
+              await _put(apiKey, binId, _buildPayload());
+              lastKnownUpdatedAt = Date.now();
+              localStorage.setItem(UPDATED_KEY, String(lastKnownUpdatedAt));
+            }
+          }
+          _saveConfig({ apiKey, binId });
+          startPolling();
+          showToast('클라우드 동기화 연결됨 · Bin ' + binId);
+          try {
+            // 사용자가 위젯 스크립트에 붙여넣을 수 있도록 클립보드 복사 시도
+            await navigator.clipboard.writeText(`const JSONBIN_API_KEY="${apiKey}";\nconst JSONBIN_BIN_ID="${binId}";`);
+            showToast('위젯용 키/Bin ID가 클립보드에 복사됐어요');
+          } catch (_) {}
+          return true;
+        } catch (e) {
+          console.warn('[cloud] connect failed:', e);
+          showToast('연결 실패: ' + (e && e.message ? e.message : ''), 'error');
+          return false;
+        }
+      }
+
+      async function disconnect() {
+        stopPolling();
+        _saveConfig(null);
+        localStorage.removeItem(UPDATED_KEY);
+        lastKnownUpdatedAt = 0;
+        showToast('클라우드 동기화 해제됨');
+      }
+
+      async function pushNow() {
+        if (!config || applyingRemote) return;
+        if (pushing) { pendingPush = true; return; }
+        pushing = true;
+        try {
+          const payload = _buildPayload();
+          await _put(config.apiKey, config.binId, payload);
+          lastKnownUpdatedAt = payload.updatedAt;
+          localStorage.setItem(UPDATED_KEY, String(lastKnownUpdatedAt));
+        } catch (e) {
+          console.warn('[cloud] push failed:', e);
+        } finally {
+          pushing = false;
+          if (pendingPush) { pendingPush = false; queuePush(); }
+        }
+      }
+
+      function queuePush() {
+        if (!config || applyingRemote) return;
+        if (pushTimer) clearTimeout(pushTimer);
+        pushTimer = setTimeout(() => { pushTimer = null; pushNow(); }, PUSH_DEBOUNCE_MS);
+      }
+
+      async function pullNow() {
+        if (!config || pulling) return;
+        pulling = true;
+        try {
+          const remote = await _get(config.apiKey, config.binId);
+          const ru = +remote.updatedAt || 0;
+          if (ru > lastKnownUpdatedAt) {
+            await _applyRemote(remote);
+          }
+        } catch (e) {
+          console.warn('[cloud] pull failed:', e);
+        } finally {
+          pulling = false;
+        }
+      }
+
+      function startPolling() {
+        stopPolling();
+        if (!config) return;
+        pollTimer = setInterval(() => {
+          if (document.hidden) return;
+          pullNow();
+        }, POLL_MS);
+      }
+      function stopPolling() {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && config) pullNow();
+      });
+
+      // 초기 pull + polling
+      if (config) {
+        pullNow().then(() => startPolling()).catch(() => startPolling());
+      }
+
+      return {
+        status, isApplyingRemote, getConfig,
+        connect, disconnect,
+        pullNow, pushNow, queuePush, onChange
+      };
+    })();
+    window.CloudSync = CloudSync;
+
+    // 클라우드 동기화 설정 버튼
+    (function () {
+      const btn = document.getElementById('settingsCloudSync');
+      const label = document.getElementById('settingsCloudSyncLabel');
+      if (!btn || !label) return;
+
+      function render() {
+        const st = CloudSync.status();
+        if (st === 'connected') {
+          const cfg = CloudSync.getConfig();
+          label.textContent = '클라우드 동기화 해제 · ' + (cfg ? cfg.binId.slice(0, 8) : '');
+        } else {
+          label.textContent = '클라우드 동기화 연결 (JSONBin)';
+        }
+      }
+      btn.addEventListener('click', async () => {
+        document.getElementById('settingsMenu').classList.remove('open');
+        const st = CloudSync.status();
+        if (st === 'connected') {
+          if (confirm('클라우드 동기화를 해제할까요? (데이터는 서버에 남아있습니다)')) {
+            await CloudSync.disconnect();
+          }
+        } else {
+          await CloudSync.connect();
+        }
+        render();
+      });
+      CloudSync.onChange(render);
       render();
     })();
 
