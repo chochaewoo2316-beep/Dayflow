@@ -130,7 +130,7 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      padding: 2px 16px 5px;
+      padding: 2px 16px 0;
     }
     .hairline {
       height: 0.5px;
@@ -142,7 +142,7 @@
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(var(--safe-bottom) + 10px);
+      padding-bottom: calc(var(--safe-bottom) + 60px);
     }
 
     /* ---------- Pull to refresh ---------- */
@@ -367,20 +367,6 @@
       background: rgba(245, 165, 36, 0.22);
       color: var(--accent);
     }
-    .add-event-label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 4px 24px;
-      white-space: nowrap;
-    }
-    .add-event-label .btn-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: -0.2px;
-    }
-
     .weekday-header {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -394,14 +380,15 @@
       flex-shrink: 0;
       border-bottom: 1px solid var(--separator);
     }
-    .weekday-header .wh.sun,
-    .weekday-header .wh.sat { color: var(--text-tertiary); }
+    .weekday-header .wh.sun { color: #e53935; }
+    .weekday-header .wh.sat { color: #1e88e5; }
 
     /* ---------- Month Grid ---------- */
     .month-grid-wrapper {
       flex: 1 1 0;
       min-height: 0;
       overflow: hidden;
+      position: relative;
     }
     .month-grid {
       width: 100%;
@@ -412,31 +399,14 @@
       gap: 0;
       min-height: 0;
     }
-    .month-grid.slide-out-left {
-      animation: slideOutLeft 250ms ease-out forwards;
+    .month-grid.ghost {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
     }
-    .month-grid.slide-out-right {
-      animation: slideOutRight 250ms ease-out forwards;
-    }
-    .month-grid.slide-in-left {
-      animation: slideInLeft 250ms ease-out forwards;
-    }
-    .month-grid.slide-in-right {
-      animation: slideInRight 250ms ease-out forwards;
-    }
-    @keyframes slideOutLeft {
-      to { opacity: 0; transform: translateX(-100%); }
-    }
-    @keyframes slideOutRight {
-      to { opacity: 0; transform: translateX(100%); }
-    }
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-100%); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(100%); }
-      to { opacity: 1; transform: translateX(0); }
+    .month-grid.anim {
+      transition: transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+      will-change: transform;
     }
     .day-cell {
       display: flex;
@@ -481,6 +451,23 @@
       opacity: 0.9;
     }
     .day-cell.other .num { color: var(--text-tertiary); opacity: 0.5; }
+    .day-cell.sun .num { color: #e53935; }
+    .day-cell.sat .num { color: #1e88e5; }
+    .day-cell.sun.other .num { color: #e53935; opacity: 0.5; }
+    .day-cell.sat.other .num { color: #1e88e5; opacity: 0.5; }
+    .day-cell.holiday .num { color: #e53935; }
+    .day-cell.holiday.other .num { color: #e53935; opacity: 0.5; }
+    .day-cell .holiday-label {
+      font-size: 9px;
+      line-height: 1;
+      color: #e53935;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .day-cell.other .holiday-label { opacity: 0.5; }
     .day-cell.today .num {
       background: var(--accent);
       color: #fff;
@@ -548,7 +535,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 16px 2px;
+      padding: 0 16px 1px;
     }
 
     .header-date .label {
@@ -585,6 +572,11 @@
       border-radius: var(--radius-md);
       box-shadow: none;
       min-height: 60px;
+      touch-action: pan-x;
+    }
+    .top-pane.resizing,
+    .week-strip.resizing {
+      transition: none !important;
     }
 
     /* Task List */
@@ -1064,6 +1056,33 @@
       color: var(--text-tertiary);
       cursor: not-allowed;
     }
+    .sheet-tabs {
+      display: inline-flex;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .sheet-header .sheet-tab {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .sheet-header .sheet-tab:hover {
+      background: transparent;
+      color: var(--text-primary);
+    }
+    .sheet-header .sheet-tab.active {
+      background: var(--bg-primary);
+      color: var(--accent);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
 
     .field { margin-bottom: 14px; }
     .field label {
@@ -1333,10 +1352,6 @@
       <div class="month-nav">
         <div class="month-title" id="monthTitle"></div>
         <div class="nav-actions">
-          <button type="button" class="nav-btn primary add-event-label" id="addEventBtn" aria-label="일정 추가">
-            <svg viewBox="0 0 20 20"><rect x="3" y="4.5" width="14" height="13" rx="2"></rect><path d="M3 8h14"></path><path d="M7 3v3"></path><path d="M13 3v3"></path><path d="M10 11v4"></path><path d="M8 13h4"></path></svg>
-            <span class="btn-label">일정추가</span>
-          </button>
           <button type="button" class="nav-btn" id="prevMonth" aria-label="이전 달">
             <svg viewBox="0 0 20 20"><path d="M12 5l-5 5 5 5"></path></svg>
           </button>
@@ -1408,6 +1423,11 @@
     </button>
     <div class="sep"></div>
     <button type="button" id="settingsInstall">홈 화면 추가 방법</button>
+    <div class="sep"></div>
+    <button type="button" id="settingsWidgetSync">
+      <span id="settingsWidgetSyncLabel">위젯 자동 동기화 연결</span>
+    </button>
+    <button type="button" id="settingsExport">위젯용 데이터 내보내기</button>
   </div>
 
   <div class="install-banner" id="installBanner" style="display:none">
@@ -1436,7 +1456,11 @@
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <button type="button" id="cancelBtn">취소</button>
-      <div class="title" id="sheetTitle">새 할 일</div>
+      <div class="sheet-tabs" id="todoTabs" role="tablist">
+        <button type="button" class="sheet-tab" data-target="event" role="tab">월간 일정</button>
+        <button type="button" class="sheet-tab active" data-target="todo" role="tab">할 일</button>
+      </div>
+      <div class="title" id="sheetTitle" style="display:none">새 할 일</div>
       <button type="button" class="primary" id="saveBtn" disabled>저장</button>
     </div>
 
@@ -1459,13 +1483,28 @@
       <label for="dateInput">날짜</label>
       <input type="date" id="dateInput" />
     </div>
+
+    <div class="field row2" id="rangeField" style="display:none">
+      <div class="sub">
+        <label for="rangeStartInput">시작일</label>
+        <input type="date" id="rangeStartInput" />
+      </div>
+      <div class="sub">
+        <label for="rangeEndInput">종료일</label>
+        <input type="date" id="rangeEndInput" />
+      </div>
+    </div>
   </div>
 
   <div class="sheet" id="eventSheet" role="dialog" aria-modal="true" aria-labelledby="eventSheetTitle">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <button type="button" id="evtCancelBtn">취소</button>
-      <div class="title" id="eventSheetTitle">새 일정</div>
+      <div class="sheet-tabs" id="eventTabs" role="tablist">
+        <button type="button" class="sheet-tab active" data-target="event" role="tab">월간 일정</button>
+        <button type="button" class="sheet-tab" data-target="todo" role="tab">할 일</button>
+      </div>
+      <div class="title" id="eventSheetTitle" style="display:none">새 일정</div>
       <button type="button" class="primary" id="evtSaveBtn" disabled>저장</button>
     </div>
 
@@ -1689,6 +1728,7 @@
         case 'daily':    return true;
         case 'weekdays': return day >= 1 && day <= 5;
         case 'weekends': return day === 0 || day === 6;
+        case 'range':    return !!(task.startDate && task.endDate) && dateStr >= task.startDate && dateStr <= task.endDate;
         default:         return false;
       }
     }
@@ -1726,6 +1766,8 @@
           category: partial.category || 'personal',
           type: partial.type || 'once',
           date: partial.date || todayStr(),
+          startDate: partial.startDate || '',
+          endDate: partial.endDate || '',
           completed: false,
           completionMap: partial.completionMap || {},
           createdAt: new Date().toISOString()
@@ -1931,6 +1973,164 @@
       return { get, set, mirror, isAvailable };
     })();
 
+    // ---------- Widget Auto Sync (File System Access API) ----------
+    const WidgetSync = (function () {
+      const HANDLE_KEY = 'dayflow.widgetFileHandle';
+      const WRITE_DEBOUNCE_MS = 600;
+
+      let handle = null;
+      let permission = 'prompt'; // 'granted' | 'denied' | 'prompt'
+      let writeTimer = null;
+      let writing = false;
+      let pendingAfterWrite = false;
+      const listeners = new Set();
+
+      function supported() {
+        return typeof window.showSaveFilePicker === 'function';
+      }
+
+      function emit() { listeners.forEach((fn) => { try { fn(); } catch (_) {} }); }
+      function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
+
+      function status() {
+        if (!supported()) return 'unsupported';
+        if (!handle) return 'disconnected';
+        if (permission === 'granted') return 'connected';
+        return 'needs-permission';
+      }
+
+      function currentName() { return handle ? handle.name : ''; }
+
+      async function _queryPermission() {
+        if (!handle) return 'prompt';
+        try { return await handle.queryPermission({ mode: 'readwrite' }); }
+        catch (_) { return 'prompt'; }
+      }
+
+      async function _requestPermission() {
+        if (!handle) return 'prompt';
+        try { return await handle.requestPermission({ mode: 'readwrite' }); }
+        catch (_) { return 'denied'; }
+      }
+
+      async function init() {
+        if (!supported()) { emit(); return; }
+        try {
+          const saved = await Persistence.get(HANDLE_KEY);
+          if (saved && typeof saved.queryPermission === 'function') {
+            handle = saved;
+            permission = await _queryPermission();
+          }
+        } catch (_) {}
+        emit();
+      }
+
+      async function connect() {
+        if (!supported()) {
+          showToast('이 브라우저에서는 자동 동기화가 지원되지 않아요', 'error');
+          return false;
+        }
+        try {
+          const picked = await window.showSaveFilePicker({
+            suggestedName: 'dayflow.json',
+            types: [{
+              description: 'JSON',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          handle = picked;
+          permission = await _requestPermission();
+          if (permission !== 'granted') {
+            showToast('파일 권한이 거부되었어요', 'error');
+            handle = null;
+            emit();
+            return false;
+          }
+          await Persistence.set(HANDLE_KEY, handle);
+          emit();
+          await writeNow();
+          showToast('자동 동기화 연결 완료');
+          return true;
+        } catch (e) {
+          if (e && e.name !== 'AbortError') {
+            console.warn('[widget-sync] connect failed:', e);
+            showToast('연결 실패', 'error');
+          }
+          return false;
+        }
+      }
+
+      async function disconnect() {
+        handle = null;
+        permission = 'prompt';
+        try { await Persistence.set(HANDLE_KEY, undefined); } catch (_) {}
+        emit();
+        showToast('자동 동기화 해제됨');
+      }
+
+      async function ensurePermission() {
+        if (!handle) return false;
+        permission = await _queryPermission();
+        if (permission === 'granted') return true;
+        permission = await _requestPermission();
+        emit();
+        return permission === 'granted';
+      }
+
+      function _buildPayload() {
+        return {
+          app: 'DayFlow',
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          tasks: state && state.tasks ? state.tasks : [],
+          events: state && state.events ? state.events : []
+        };
+      }
+
+      async function writeNow() {
+        if (!handle) return;
+        if (writing) { pendingAfterWrite = true; return; }
+        writing = true;
+        try {
+          if (permission !== 'granted') {
+            permission = await _queryPermission();
+            if (permission !== 'granted') return; // 사용자 제스처 필요
+          }
+          const writable = await handle.createWritable();
+          await writable.write(JSON.stringify(_buildPayload()));
+          await writable.close();
+        } catch (e) {
+          console.warn('[widget-sync] write failed:', e);
+          // 권한이 만료되었거나 파일이 이동/삭제된 경우
+          if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) {
+            permission = 'prompt';
+            emit();
+          }
+        } finally {
+          writing = false;
+          if (pendingAfterWrite) {
+            pendingAfterWrite = false;
+            queueWrite();
+          }
+        }
+      }
+
+      function queueWrite() {
+        if (!handle) return;
+        if (writeTimer) clearTimeout(writeTimer);
+        writeTimer = setTimeout(() => { writeTimer = null; writeNow(); }, WRITE_DEBOUNCE_MS);
+      }
+
+      init();
+
+      return {
+        supported, status, currentName,
+        connect, disconnect, ensurePermission,
+        writeNow, queueWrite, onChange
+      };
+    })();
+    window.WidgetSync = WidgetSync;
+
     // ---------- Toast ----------
     function showToast(msg, kind) {
       const existing = document.getElementById('__toast');
@@ -1992,6 +2192,7 @@
       }
       Persistence.mirror(key, { savedAt, value });
       updateSnapshots();
+      if (typeof WidgetSync !== 'undefined') WidgetSync.queueWrite();
     }
 
     function parseRgb(str) {
@@ -2207,7 +2408,7 @@
       { key: 'work',     label: '업무' },
       { key: 'personal', label: '개인' },
       { key: 'study',    label: '공부' },
-      { key: 'schedule', label: '일정' }
+      { key: 'schedule', label: '기타' }
     ];
 
     const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -2368,7 +2569,7 @@
         return;
       }
 
-      const ROUTINE_LABELS = { daily: 'DAILY', weekdays: 'WEEKDAYS', weekends: 'WEEKENDS' };
+      const ROUTINE_LABELS = { daily: 'DAILY', weekdays: 'WEEKDAYS', weekends: 'WEEKENDS', range: '기간' };
 
       const milestoneHtml = milestones.map((ms) => `
         <div class="task-item" data-id="${ms.id}">
@@ -2415,6 +2616,102 @@
           </div>
         `;
       }).join('');
+    }
+
+    // ---------- Korean Holidays ----------
+    const FIXED_HOLIDAYS = [
+      { md: '01-01', name: '신정' },
+      { md: '03-01', name: '삼일절' },
+      { md: '05-05', name: '어린이날' },
+      { md: '06-06', name: '현충일' },
+      { md: '08-15', name: '광복절' },
+      { md: '10-03', name: '개천절' },
+      { md: '10-09', name: '한글날' },
+      { md: '12-25', name: '크리스마스' },
+    ];
+
+    const _holidayCache = {};
+
+    function _addDaysStr(ds, n) {
+      const [y, m, d] = ds.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + n);
+      return toDateStr(dt);
+    }
+    function _dowOf(ds) {
+      const [y, m, d] = ds.split('-').map(Number);
+      return new Date(y, m - 1, d).getDay();
+    }
+
+    function getKoreanHolidays(year) {
+      if (_holidayCache[year]) return _holidayCache[year];
+      const map = {};
+      const put = (ds, name) => {
+        if (!map[ds]) map[ds] = { name, isSubstitute: false };
+      };
+
+      for (const h of FIXED_HOLIDAYS) {
+        put(`${year}-${h.md}`, h.name);
+      }
+
+      const addLunar = (ly, lm, ld, name) => {
+        const s = lunarToSolar(ly, lm, ld, false);
+        if (s.year === year) {
+          put(`${s.year}-${pad2(s.month)}-${pad2(s.day)}`, name);
+        }
+      };
+
+      try {
+        const prevLastDay = lunarMonthDays(year - 1, 12);
+        addLunar(year - 1, 12, prevLastDay, '설날 연휴');
+        addLunar(year, 1, 1, '설날');
+        addLunar(year, 1, 2, '설날 연휴');
+        addLunar(year, 4, 8, '부처님오신날');
+        addLunar(year, 8, 14, '추석 연휴');
+        addLunar(year, 8, 15, '추석');
+        addLunar(year, 8, 16, '추석 연휴');
+      } catch (e) {
+        console.warn('[holidays] lunar calc failed for', year, e);
+      }
+
+      // 대체공휴일 계산
+      const baseDates = Object.keys(map).sort();
+      const substitutes = {};
+      const isHolidayAt = (ds) => !!map[ds] || !!substitutes[ds];
+
+      for (const ds of baseDates) {
+        const h = map[ds];
+        const dow = _dowOf(ds);
+        const name = h.name;
+        const isSeolChuseok = /설날|추석/.test(name);
+        const isChildren = name === '어린이날';
+        let needSub = false;
+        if (isChildren) {
+          if (dow === 0 || dow === 6) needSub = true;
+        } else if (isSeolChuseok) {
+          if (dow === 0) needSub = true;
+        } else {
+          if (dow === 0) needSub = true;
+        }
+        if (!needSub) continue;
+        let cand = _addDaysStr(ds, 1);
+        while (_dowOf(cand) === 0 || isHolidayAt(cand)) {
+          cand = _addDaysStr(cand, 1);
+        }
+        if (cand.startsWith(`${year}-`) && !substitutes[cand]) {
+          substitutes[cand] = { name: `${name} (대체공휴일)`, isSubstitute: true };
+        }
+      }
+      Object.assign(map, substitutes);
+
+      _holidayCache[year] = map;
+      return map;
+    }
+
+    function isHoliday(dateStr) {
+      const year = parseInt(dateStr.slice(0, 4), 10);
+      const map = getKoreanHolidays(year);
+      return map[dateStr] || null;
     }
 
     // ---------- Month Grid ----------
@@ -2498,6 +2795,11 @@
         if (!inMonth) classes.push('other');
         if (ds === today) classes.push('today');
         if (ds === state.selectedDate) classes.push('selected');
+        const dow = d.getDay();
+        if (dow === 0) classes.push('sun');
+        else if (dow === 6) classes.push('sat');
+        const holiday = isHoliday(ds);
+        if (holiday) classes.push('holiday');
 
         const visible = dayItems.slice(0, MAX_CHIPS);
         const extra = dayItems.length - visible.length;
@@ -2536,10 +2838,15 @@
           }
         }
 
+        const holidayLabelHtml = holiday
+          ? `<span class="holiday-label" title="${escapeHtml(holiday.name)}">${escapeHtml(holiday.name)}</span>`
+          : '';
+        const cellTitle = holiday ? ` title="${escapeHtml(holiday.name)}"` : '';
         return `
-          <div class="${classes.join(' ')}" data-date="${ds}">
+          <div class="${classes.join(' ')}" data-date="${ds}"${cellTitle}>
             <div class="cell-head">
               <div class="num">${d.getDate()}</div>
+              ${holidayLabelHtml}
               ${specialEmojiHtml}
               ${weatherEmojiHtml}
             </div>
@@ -2575,38 +2882,142 @@
       render();
     });
 
+    // ---------- 주간 캘린더 드래그로 상/하 패널 비율 조정 ----------
+    (function () {
+      const appEl = document.getElementById('appContainer');
+      const topPane = document.querySelector('.top-pane');
+      const weekStrip = document.getElementById('weekStrip');
+      const DRAG_THRESHOLD = 8;
+
+      let startY = 0, startH = 0, minH = 0, maxH = 0;
+      let armed = false, dragging = false, suppressClick = false;
+
+      function captureStart(clientY) {
+        startY = clientY;
+        startH = topPane.getBoundingClientRect().height;
+        const appH = appEl.getBoundingClientRect().height;
+        minH = Math.max(130, appH * 0.22);
+        maxH = appH * 0.82;
+        armed = true;
+        dragging = false;
+      }
+
+      function applyDelta(clientY) {
+        const dy = clientY - startY;
+        if (!dragging) {
+          if (Math.abs(dy) < DRAG_THRESHOLD) return false;
+          dragging = true;
+          topPane.classList.add('resizing');
+        }
+        const newH = Math.min(maxH, Math.max(minH, startH + dy));
+        topPane.style.flex = '0 0 ' + newH + 'px';
+        return true;
+      }
+
+      function finish() {
+        if (dragging) suppressClick = true;
+        armed = false;
+        dragging = false;
+        topPane.classList.remove('resizing');
+      }
+
+      // 터치
+      weekStrip.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        captureStart(e.touches[0].clientY);
+      }, { passive: true });
+      weekStrip.addEventListener('touchmove', (e) => {
+        if (!armed) return;
+        const moved = applyDelta(e.touches[0].clientY);
+        if (dragging && e.cancelable) e.preventDefault();
+      }, { passive: false });
+      weekStrip.addEventListener('touchend', finish);
+      weekStrip.addEventListener('touchcancel', finish);
+
+      // 데스크톱 포인터 (마우스)
+      weekStrip.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') return;
+        if (e.button !== 0) return;
+        captureStart(e.clientY);
+      });
+      window.addEventListener('pointermove', (e) => {
+        if (!armed || e.pointerType === 'touch') return;
+        applyDelta(e.clientY);
+      });
+      window.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') return;
+        if (armed) finish();
+      });
+
+      // 드래그 직후의 클릭이 날짜를 선택하지 않도록 가드
+      weekStrip.addEventListener('click', (e) => {
+        if (suppressClick) {
+          e.stopPropagation();
+          e.preventDefault();
+          suppressClick = false;
+        }
+      }, true);
+    })();
+
     // ---------- Month navigation ----------
     let monthAnimating = false;
+    const MONTH_ANIM_MS = 320;
+
+    function advanceViewMonth(delta) {
+      let { year, month } = state.viewMonth;
+      month += delta;
+      if (month < 0) { month = 11; year--; }
+      if (month > 11) { month = 0; year++; }
+      state.viewMonth = { year, month };
+    }
+
     function changeMonth(delta, animate) {
       if (monthAnimating) return;
+      const wrapper = document.getElementById('monthGridWrapper');
       const grid = document.getElementById('monthGrid');
-      if (animate && grid.animate) {
-        monthAnimating = true;
-        const outClass = delta > 0 ? 'slide-out-left' : 'slide-out-right';
-        const inClass = delta > 0 ? 'slide-in-right' : 'slide-in-left';
-        grid.classList.add(outClass);
-        setTimeout(() => {
-          grid.classList.remove(outClass);
-          let { year, month } = state.viewMonth;
-          month += delta;
-          if (month < 0) { month = 11; year--; }
-          if (month > 11) { month = 0; year++; }
-          state.viewMonth = { year, month };
-          renderMonthGrid();
-          grid.classList.add(inClass);
-          setTimeout(() => {
-            grid.classList.remove(inClass);
-            monthAnimating = false;
-          }, 250);
-        }, 250);
-      } else {
-        let { year, month } = state.viewMonth;
-        month += delta;
-        if (month < 0) { month = 11; year--; }
-        if (month > 11) { month = 0; year++; }
-        state.viewMonth = { year, month };
+
+      if (!animate) {
+        advanceViewMonth(delta);
         renderMonthGrid();
+        return;
       }
+
+      monthAnimating = true;
+
+      const easing = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
+
+      // 현재 달 스냅샷을 오버레이로 두고, 실제 grid는 새 달로 갱신해 옆에서 함께 슬라이드
+      const ghost = grid.cloneNode(true);
+      ghost.id = '';
+      ghost.classList.add('ghost');
+      ghost.style.transform = 'translateX(0)';
+      ghost.style.transition = 'none';
+      wrapper.appendChild(ghost);
+
+      advanceViewMonth(delta);
+      renderMonthGrid();
+
+      const incomingFrom = delta > 0 ? '100%' : '-100%';
+      const outgoingTo   = delta > 0 ? '-100%' : '100%';
+
+      grid.style.transition = 'none';
+      grid.style.transform = `translateX(${incomingFrom})`;
+      void grid.offsetHeight;
+
+      grid.style.transition  = `transform ${MONTH_ANIM_MS}ms ${easing}`;
+      ghost.style.transition = `transform ${MONTH_ANIM_MS}ms ${easing}`;
+
+      requestAnimationFrame(() => {
+        grid.style.transform = 'translateX(0)';
+        ghost.style.transform = `translateX(${outgoingTo})`;
+      });
+
+      setTimeout(() => {
+        ghost.remove();
+        grid.style.transition = '';
+        grid.style.transform = '';
+        monthAnimating = false;
+      }, MONTH_ANIM_MS + 30);
     }
 
     function jumpToMonth(year, month) {
@@ -2710,8 +3121,6 @@
       grid.addEventListener('pointerdown', (e) => {
         const cell = e.target.closest('.day-cell');
         if (!cell) return;
-        // 칩 위에서 시작된 제스처는 롱프레스 대상 아님
-        if (e.target.closest('.chip')) return;
         fired = false;
         targetDate = cell.dataset.date;
         startX = e.clientX;
@@ -2736,13 +3145,6 @@
         fired = false;
         cancel();
         if (wasLongPress) return;
-        const chip = e.target.closest('.chip');
-        if (chip) {
-          const cellEl = chip.closest('.day-cell');
-          const cellDate = cellEl ? cellEl.dataset.date : state.selectedDate;
-          EventModal.openEdit(chip.dataset.eventId, cellDate);
-          return;
-        }
         const cell = e.target.closest('.day-cell');
         if (!cell) return;
         setSelectedDate(cell.dataset.date);
@@ -2751,6 +3153,17 @@
 
       grid.addEventListener('pointercancel', () => { fired = false; cancel(); });
       grid.addEventListener('pointerleave', () => { cancel(); });
+
+      // 더블클릭: 해당 날짜로 월간 일정 추가 모달 열기
+      grid.addEventListener('dblclick', (e) => {
+        if (e.target.closest('.chip')) return;
+        const cell = e.target.closest('.day-cell');
+        if (!cell) return;
+        e.preventDefault();
+        cancel();
+        fired = true;
+        EventModal.openAdd(cell.dataset.date);
+      });
     })();
 
     document.getElementById('categoryFilter').addEventListener('click', (e) => {
@@ -2799,6 +3212,9 @@
       const titleInput = document.getElementById('titleInput');
       const dateInput = document.getElementById('dateInput');
       const dateField = document.getElementById('dateField');
+      const rangeField = document.getElementById('rangeField');
+      const rangeStartInput = document.getElementById('rangeStartInput');
+      const rangeEndInput = document.getElementById('rangeEndInput');
       const catSeg = document.getElementById('catSeg');
       const typeSeg = document.getElementById('typeSeg');
       const saveBtn = document.getElementById('saveBtn');
@@ -2809,13 +3225,14 @@
         { key: 'work',     label: '업무' },
         { key: 'personal', label: '개인' },
         { key: 'study',    label: '공부' },
-        { key: 'schedule', label: '일정' }
+        { key: 'schedule', label: '기타' }
       ];
       const TYPES = [
         { key: 'once',     label: '일회성' },
         { key: 'daily',    label: '매일' },
         { key: 'weekdays', label: '평일' },
-        { key: 'weekends', label: '주말' }
+        { key: 'weekends', label: '주말' },
+        { key: 'range',    label: '기간' }
       ];
 
       let draft = null;
@@ -2829,22 +3246,40 @@
           `<button type="button" class="${draft.type === t.key ? 'active' : ''}" data-type="${t.key}">${t.label}</button>`
         ).join('');
         dateField.style.display = draft.type === 'once' ? '' : 'none';
+        rangeField.style.display = draft.type === 'range' ? '' : 'none';
       }
 
       function updateSaveState() {
-        saveBtn.disabled = titleInput.value.trim().length === 0;
+        const hasTitle = titleInput.value.trim().length > 0;
+        let ok = hasTitle;
+        if (draft && draft.type === 'range') {
+          ok = ok && !!rangeStartInput.value && !!rangeEndInput.value
+                  && rangeEndInput.value >= rangeStartInput.value;
+        }
+        saveBtn.disabled = !ok;
       }
 
       function open(task, presetDate) {
+        const baseDate = task && task.date ? task.date : (presetDate || state.selectedDate);
         draft = {
           category: task ? task.category : 'personal',
           type:     task ? task.type     : 'once',
-          date:     task && task.date    ? task.date : (presetDate || state.selectedDate)
+          date:     baseDate
         };
         editingId = task ? task.id : null;
         sheetTitle.textContent = task ? '할 일 수정' : '새 할 일';
+        const todoTabs = document.getElementById('todoTabs');
+        if (task) {
+          todoTabs.style.display = 'none';
+          sheetTitle.style.display = '';
+        } else {
+          todoTabs.style.display = '';
+          sheetTitle.style.display = 'none';
+        }
         titleInput.value = task ? task.title : '';
-        dateInput.value = draft.date;
+        dateInput.value = baseDate;
+        rangeStartInput.value = (task && task.startDate) ? task.startDate : baseDate;
+        rangeEndInput.value   = (task && task.endDate)   ? task.endDate   : baseDate;
         renderSegs();
         updateSaveState();
 
@@ -2872,17 +3307,25 @@
       function save() {
         const title = titleInput.value.trim();
         if (!title) return;
+        const isRange = draft.type === 'range';
+        if (isRange) {
+          if (!rangeStartInput.value || !rangeEndInput.value) return;
+          if (rangeEndInput.value < rangeStartInput.value) return;
+        }
         const payload = {
           title,
           category: draft.category,
           type: draft.type,
-          date: draft.type === 'once' ? (dateInput.value || todayStr()) : ''
+          date: draft.type === 'once' ? (dateInput.value || todayStr()) : '',
+          startDate: isRange ? rangeStartInput.value : '',
+          endDate:   isRange ? rangeEndInput.value   : ''
         };
         if (editingId) {
           Store.update(editingId, payload);
         } else {
           Store.add(payload);
           if (payload.type === 'once') setSelectedDate(payload.date);
+          else if (isRange) setSelectedDate(payload.startDate);
         }
         close();
         render();
@@ -2902,6 +3345,13 @@
           try { titleInput.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
         }, 250);
       });
+      rangeStartInput.addEventListener('change', () => {
+        if (rangeEndInput.value && rangeEndInput.value < rangeStartInput.value) {
+          rangeEndInput.value = rangeStartInput.value;
+        }
+        updateSaveState();
+      });
+      rangeEndInput.addEventListener('change', updateSaveState);
 
       catSeg.addEventListener('click', (e) => {
         const b = e.target.closest('button[data-cat]');
@@ -2914,6 +3364,7 @@
         if (!b) return;
         draft.type = b.dataset.type;
         renderSegs();
+        updateSaveState();
       });
 
       document.addEventListener('keydown', (e) => {
@@ -3065,10 +3516,18 @@
         const isRange = ev ? ev.startDate !== ev.endDate : false;
         draft = {
           kind:  ev ? ev.kind  : 'normal',
-          color: ev ? ev.color : EVENT_COLORS[0],
+          color: ev ? ev.color : EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)],
           range: isRange ? 'range' : 'single'
         };
         sheetTitle.textContent = ev ? '일정 수정' : '새 일정';
+        const eventTabs = document.getElementById('eventTabs');
+        if (ev) {
+          eventTabs.style.display = 'none';
+          sheetTitle.style.display = '';
+        } else {
+          eventTabs.style.display = '';
+          sheetTitle.style.display = 'none';
+        }
         titleInput.value = ev ? ev.title : '';
         startInput.value = ev ? ev.startDate : (presetDate || state.selectedDate);
         endInput.value   = ev ? ev.endDate   : (presetDate || state.selectedDate);
@@ -3232,8 +3691,25 @@
       EventModal.close && EventModal.close();
     });
 
-    document.getElementById('addEventBtn').addEventListener('click', () => {
-      EventModal.openAdd(state.selectedDate);
+    // 시트 헤더 탭: 할 일 ↔ 월간 일정 전환 (신규 추가 시에만 표시)
+    function switchSheet(target) {
+      if (target === 'event') {
+        Modal.close && Modal.close();
+        EventModal.openAdd(state.selectedDate);
+      } else {
+        EventModal.close && EventModal.close();
+        Modal.openAdd(state.selectedDate);
+      }
+    }
+    document.getElementById('todoTabs').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-target]');
+      if (!b || b.classList.contains('active')) return;
+      switchSheet(b.dataset.target);
+    });
+    document.getElementById('eventTabs').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-target]');
+      if (!b || b.classList.contains('active')) return;
+      switchSheet(b.dataset.target);
     });
 
     // ---------- Weather Module ----------
@@ -3622,8 +4098,12 @@
 
       refreshBtn.addEventListener('click', async () => {
         close();
-        await Weather.ensureLocation(true);
-        await Weather.refresh(true);
+        try {
+          await Weather.ensureLocation(true);
+          await Weather.refresh(true);
+        } catch (e) {
+          console.warn('[Weather] refresh failed:', e);
+        }
         render();
       });
 
@@ -3646,7 +4126,13 @@
         const next = !Weather.getPrefs().enabled;
         Weather.setEnabled(next);
         sync();
-        if (next) await Weather.refresh();
+        if (next) {
+          try {
+            await Weather.refresh();
+          } catch (e) {
+            console.warn('[Weather] refresh failed:', e);
+          }
+        }
         render();
       });
 
@@ -3753,13 +4239,82 @@
       });
     })();
 
-    function checkBackupReminder() {}
-
     // 콘솔 테스트용
     window.Events = Events;
     window.EventModal = EventModal;
     window.Weather = Weather;
     window.exportData = exportData;
+
+    // 위젯용 데이터 내보내기 (Scriptable 위젯에서 읽어가는 고정 파일명)
+    function exportForWidget() {
+      const payload = {
+        app: 'DayFlow',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        tasks: state.tasks,
+        events: state.events
+      };
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dayflow.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('dayflow.json 저장됨 · Scriptable 폴더로 옮겨주세요');
+    }
+    window.exportForWidget = exportForWidget;
+    (function () {
+      const btn = document.getElementById('settingsExport');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        document.getElementById('settingsMenu').classList.remove('open');
+        exportForWidget();
+      });
+    })();
+
+    // 위젯 자동 동기화 설정 버튼
+    (function () {
+      const btn = document.getElementById('settingsWidgetSync');
+      const label = document.getElementById('settingsWidgetSyncLabel');
+      if (!btn || !label) return;
+
+      function render() {
+        const st = WidgetSync.status();
+        if (st === 'unsupported') {
+          label.textContent = '자동 동기화 (이 브라우저 미지원)';
+          btn.disabled = true;
+          return;
+        }
+        btn.disabled = false;
+        if (st === 'connected') {
+          label.textContent = '자동 동기화 해제 · ' + (WidgetSync.currentName() || 'dayflow.json');
+        } else if (st === 'needs-permission') {
+          label.textContent = '자동 동기화 권한 다시 요청';
+        } else {
+          label.textContent = '위젯 자동 동기화 연결';
+        }
+      }
+
+      btn.addEventListener('click', async () => {
+        document.getElementById('settingsMenu').classList.remove('open');
+        const st = WidgetSync.status();
+        if (st === 'connected') {
+          if (confirm('자동 동기화를 해제할까요?')) await WidgetSync.disconnect();
+        } else if (st === 'needs-permission') {
+          const ok = await WidgetSync.ensurePermission();
+          if (ok) { await WidgetSync.writeNow(); showToast('동기화 재개됨'); }
+        } else {
+          await WidgetSync.connect();
+        }
+        render();
+      });
+
+      WidgetSync.onChange(render);
+      render();
+    })();
 
     // ---------- IDB repair / hydrate ----------
     async function repairFromIDB() {
@@ -3889,6 +4444,7 @@
       let pulling = false;
 
       app.addEventListener('touchstart', (e) => {
+        if (e.target.closest('#weekStrip')) return;
         const bp = document.getElementById('bottomPane');
         if (bp.scrollTop <= 0) {
           startY = e.touches[0].clientY;
@@ -3951,7 +4507,6 @@
     // ---------- Bootstrap ----------
     Weather.load();
     render();
-    checkBackupReminder();
     (async () => {
       await repairFromIDB();
       try {
