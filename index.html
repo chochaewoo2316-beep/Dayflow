@@ -142,7 +142,7 @@
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: calc(var(--safe-bottom) + 60px);
+      padding-bottom: calc(var(--safe-bottom) + 70px);
     }
 
     /* ---------- Pull to refresh ---------- */
@@ -572,11 +572,6 @@
       border-radius: var(--radius-md);
       box-shadow: none;
       min-height: 60px;
-      touch-action: pan-x;
-    }
-    .top-pane.resizing,
-    .week-strip.resizing {
-      transition: none !important;
     }
 
     /* Task List */
@@ -2888,82 +2883,6 @@
       render();
     });
 
-    // ---------- 주간 캘린더 드래그로 상/하 패널 비율 조정 ----------
-    (function () {
-      const appEl = document.getElementById('appContainer');
-      const topPane = document.querySelector('.top-pane');
-      const weekStrip = document.getElementById('weekStrip');
-      const DRAG_THRESHOLD = 8;
-
-      let startY = 0, startH = 0, minH = 0, maxH = 0;
-      let armed = false, dragging = false, suppressClick = false;
-
-      function captureStart(clientY) {
-        startY = clientY;
-        startH = topPane.getBoundingClientRect().height;
-        const appH = appEl.getBoundingClientRect().height;
-        minH = Math.max(130, appH * 0.22);
-        maxH = appH * 0.82;
-        armed = true;
-        dragging = false;
-      }
-
-      function applyDelta(clientY) {
-        const dy = clientY - startY;
-        if (!dragging) {
-          if (Math.abs(dy) < DRAG_THRESHOLD) return false;
-          dragging = true;
-          topPane.classList.add('resizing');
-        }
-        const newH = Math.min(maxH, Math.max(minH, startH + dy));
-        topPane.style.flex = '0 0 ' + newH + 'px';
-        return true;
-      }
-
-      function finish() {
-        if (dragging) suppressClick = true;
-        armed = false;
-        dragging = false;
-        topPane.classList.remove('resizing');
-      }
-
-      // 터치
-      weekStrip.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
-        captureStart(e.touches[0].clientY);
-      }, { passive: true });
-      weekStrip.addEventListener('touchmove', (e) => {
-        if (!armed) return;
-        const moved = applyDelta(e.touches[0].clientY);
-        if (dragging && e.cancelable) e.preventDefault();
-      }, { passive: false });
-      weekStrip.addEventListener('touchend', finish);
-      weekStrip.addEventListener('touchcancel', finish);
-
-      // 데스크톱 포인터 (마우스)
-      weekStrip.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'touch') return;
-        if (e.button !== 0) return;
-        captureStart(e.clientY);
-      });
-      window.addEventListener('pointermove', (e) => {
-        if (!armed || e.pointerType === 'touch') return;
-        applyDelta(e.clientY);
-      });
-      window.addEventListener('pointerup', (e) => {
-        if (e.pointerType === 'touch') return;
-        if (armed) finish();
-      });
-
-      // 드래그 직후의 클릭이 날짜를 선택하지 않도록 가드
-      weekStrip.addEventListener('click', (e) => {
-        if (suppressClick) {
-          e.stopPropagation();
-          e.preventDefault();
-          suppressClick = false;
-        }
-      }, true);
-    })();
 
     // ---------- Month navigation ----------
     let monthAnimating = false;
@@ -4699,7 +4618,6 @@
       let pulling = false;
 
       app.addEventListener('touchstart', (e) => {
-        if (e.target.closest('#weekStrip')) return;
         const bp = document.getElementById('bottomPane');
         if (bp.scrollTop <= 0) {
           startY = e.touches[0].clientY;
